@@ -38,7 +38,6 @@
 > 💡 **Tip:** If your menu bar is full, some icons may be hidden behind the chevron (⌃).  
 > Use the chevron to reveal NailBiteMenu, or relaunch it from Applications.
 
----
 
 ## 🧩 Usage
 
