@@ -98,5 +98,5 @@ Found a bug? Have a suggestion?
 
 
 <p align="center">
-  Made with ❤️ on macOS • © 2025 <a href="https://github.com/yourname">yourname</a>
+  Made with ❤️ on macOS • © 2025 <a href="https://github.com/killian31">killian31</a>
 </p>
