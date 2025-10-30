@@ -5,7 +5,7 @@
 <h1 align="center">NailBiteMenu</h1>
 
 <p align="center">
-  🧠 A <b>menu bar app</b> that uses your Mac’s camera to detect nail-biting in real time, locally and privately.
+  A <b>menu bar app</b> that uses your Mac’s camera to detect nail-biting in real time, locally and privately.
   <br/>
   <a href="https://github.com/killian31/NailBiteMenu/releases/latest/download/NailBiteMenu.dmg">
     ⬇️ <b>Download for macOS (DMG)</b>
@@ -14,15 +14,15 @@
 
 ## 📑 Table of Contents
 
-- [🚀 Installation](#-installation)
-- [🧩 Usage](#-usage)
-  - [🎛️ Controls](#️-controls)
-  - [⚙️ Threshold](#️-threshold)
-  - [🧠 Model Size](#-model-size)
-- [🔔 Alerts](#-alerts)
-- [🔒 Privacy](#-privacy)
-- [🧰 Requirements](#-requirements)
-- [💬 Feedback](#-feedback)
+- [Installation](#-installation)
+- [Usage](#-usage)
+  - [Controls](#️-controls)
+  - [Threshold](#️-threshold)
+  - [Model Size](#-model-size)
+- [Alerts](#-alerts)
+- [Privacy](#-privacy)
+- [Requirements](#-requirements)
+- [Feedback](#-feedback)
 
 ## 🚀 Installation
 
@@ -41,14 +41,14 @@
 
 ## 🧩 Usage
 
-### 🎛️ Controls
+### Controls
 Click the menu bar icon to open controls.  
 You can:
 - **Start / Stop monitoring**
 - **Adjust detection threshold**
 - **Select model size (speed vs. accuracy)**
 
-### ⚙️ Threshold
+### Threshold
 The threshold controls how sensitive the detection is:
 | Threshold | Behavior |
 |------------|-----------|
@@ -58,14 +58,14 @@ The threshold controls how sensitive the detection is:
 
 Tweak it depending on lighting conditions and how close you sit to the camera.
 
-### 🧠 Model Size
+### Model Size
 The app includes several model variants corresponding to different input image size:
 
 | Model | Description | Speed | Accuracy |
 |--------|--------------|--------|-----------|
 | **224px** | Fastest, lowest power usage | ⚡️⚡️⚡️ | ⭐️⭐️⭐️ |
 | **384px** | Better detection accuracy | ⚡️⚡️ | ⭐️⭐️⭐️⭐️ |
-| **512** | Highest precision (slower) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
+| **512px** | Highest precision (slower) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
 
 > 💡 Tip: Start with **512px** if running on a Mac with Apple Silicon (M1-M5 chips).
 > On an Intel Mac, only the 224px is real-time. Other lodels can still run but will be slower.
