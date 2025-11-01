@@ -16,8 +16,8 @@
 
 - [Installation](#-installation)
 - [Usage](#-usage)
-  - [Controls](#️-controls)
-  - [Threshold](#️-threshold)
+  - [Controls](#-controls)
+  - [Threshold](#-threshold)
   - [Model Size](#-model-size)
 - [Alerts](#-alerts)
 - [Privacy](#-privacy)
@@ -48,6 +48,8 @@ You can:
 - **Adjust detection threshold**
 - **Select model size (speed vs. accuracy)**
 
+The app uses your default camera, taking 5 pictures per second. This is enough to detect nail-biting and reduces CPU load dramatically.
+
 ### Threshold
 The threshold controls how sensitive the detection is:
 | Threshold | Behavior |
@@ -68,13 +70,12 @@ The app includes several model variants corresponding to different input image s
 | **512px** | Highest precision (slower) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
 
 > 💡 Tip: Start with **512px** if running on a Mac with Apple Silicon (M1-M5 chips).
-> On an Intel Mac, only the 224px is real-time. Other lodels can still run but will be slower.
-
+> Intel Macs are likely to heat up when using model > 224px.
 
 ## 🔔 Alerts
 
 When nail-biting is detected:
-- A popup indicating detection and confidence appears, and is removed either by clicking the button or waiting 3 seconds.
+- A popup indicating detection and confidence appears, and is removed either by clicking the button, waiting 3 seconds or hit the Enter key.
 - A notification can appear (if enabled in macOS **Notifications & Focus**).
 
 
