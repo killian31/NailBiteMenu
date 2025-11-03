@@ -4,6 +4,9 @@
 
 <h1 align="center">NailBiteMenu</h1>
 
+[![](https://img.shields.io/github/downloads/killian31/NailBiteMenu/total?style=for-the-badge&logo=apple&color=violet)](https://github.com/killian31/NailBiteMenu/releases/latest)
+
+
 <p align="center">
   A <b>menu bar app</b> that uses your Mac’s camera to detect nail-biting in real time, locally and privately.
   <br/>
