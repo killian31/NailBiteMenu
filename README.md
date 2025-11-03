@@ -70,7 +70,7 @@ The app includes several model variants corresponding to different input image s
 | **512px** | Highest precision (slower) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
 
 > 💡 Tip: Start with **512px** if running on a Mac with Apple Silicon (M1-M5 chips).
-> Intel Macs are likely to heat up when using model > 224px.
+> Intel Macs may heat up when using model > 224px.
 
 ## 🔔 Alerts
 
