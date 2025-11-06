@@ -6,7 +6,6 @@
 
 [![](https://img.shields.io/github/downloads/killian31/NailBiteMenu/total?style=for-the-badge&logo=apple&color=violet)](https://github.com/killian31/NailBiteMenu/releases/latest)
 
-
 <p align="center">
   A <b>menu bar app</b> that uses your Mac’s camera to detect nail-biting in real time, locally and privately.
   <br/>
@@ -15,92 +14,99 @@
   </a>
 </p>
 
-## 📑 Table of Contents
+## Table of Contents
 
-- [Installation](#-installation)
-- [Usage](#-usage)
-  - [Controls](#-controls)
-  - [Threshold](#-threshold)
-  - [Model Size](#-model-size)
-- [Alerts](#-alerts)
-- [Privacy](#-privacy)
-- [Requirements](#-requirements)
-- [Feedback](#-feedback)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Controls](#controls)
+  - [Threshold](#threshold)
+  - [Model Size](#model-size)
+- [Alerts](#alerts)
+- [Privacy](#privacy)
+- [Requirements](#requirements)
+- [Feedback](#feedback)
 
-## 🚀 Installation
+## Installation
 
 1. **Download** the latest release:  
    👉 [NailBiteMenu.dmg](https://github.com/killian31/NailBiteMenu/releases/latest/download/NailBiteMenu.dmg)
 
 2. **Open** the DMG and **drag** `NailBiteMenu.app` into your **Applications** folder.
 
-3. When launching the first time, macOS will warn that it’s from an *unidentified developer*: go to **System Settings → Privacy & Security → Open Anyway**.
+3. On first launch, macOS may say it’s from an unidentified developer. Go to **System Settings → Privacy & Security → Open Anyway**.
 
-4. After that, NailBiteMenu runs quietly from your **menu bar**.
+4. NailBiteMenu now runs quietly from your **menu bar**.
 
-> 💡 **Tip:** If your menu bar is full, some icons may be hidden behind the chevron (⌃).  
-> Use the chevron to reveal NailBiteMenu, or relaunch it from Applications.
+> **Tip:** If your menu bar is crowded, macOS may hide the icon behind the chevron (⌃). Drag it out from Control Center to pin it.
 
+## Usage
 
-## 🧩 Usage
+Launching the app from Applications shows a Home window that offers quick actions:
+
+- **Open Settings**: adjust defaults, mute alerts, pick model size.
+- **Collapse to Menu Bar**: close the window while keeping monitoring active.
 
 ### Controls
-Click the menu bar icon to open controls.  
-You can:
-- **Start / Stop monitoring**
-- **Adjust detection threshold**
-- **Select model size (speed vs. accuracy)**
 
-The app uses your default camera, taking 5 pictures per second. This is enough to detect nail-biting and reduces CPU load dramatically.
+Click the status icon to open the compact control panel. You can:
+
+- **Start / Pause monitoring**
+- **Adjust detection threshold**
+- **Choose model size (speed vs. accuracy)**
+- **Toggle alerts and debug stats**
+
+Monitoring uses the built-in camera at a modest frame rate, keeping CPU usage low while still catching gestures.
 
 ### Threshold
-The threshold controls how sensitive the detection is:
-| Threshold | Behavior |
-|------------|-----------|
-| **Low (e.g. 0.45)** | More sensitive, may trigger false positives |
-| **Medium (≈ 0.6)** | Balanced (recommended) |
-| **High (e.g. 0.9)** | Less sensitive, only strong detections trigger alerts |
 
-Tweak it depending on lighting conditions and how close you sit to the camera.
+The threshold controls how sensitive detection is:
+
+| Threshold | Behavior |
+|-----------|----------|
+| **Low (≈45%)** | Very sensitive, may flag normal movements |
+| **Balanced (≈60%)** | Recommended everyday setting |
+| **High (≈75%+)** | Only triggers on strong evidence |
+
+Tune it based on lighting, distance to the camera, and how early you want alerts.
 
 ### Model Size
-The app includes several model variants corresponding to different input image size:
+
+Each bundled model trades speed for precision:
 
 | Model | Description | Speed | Accuracy |
-|--------|--------------|--------|-----------|
-| **224px** | Fastest, lowest power usage | ⚡️⚡️⚡️ | ⭐️⭐️⭐️ |
-| **384px** | Better detection accuracy | ⚡️⚡️ | ⭐️⭐️⭐️⭐️ |
-| **512px** | Highest precision (slower) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
+|-------|-------------|-------|----------|
+| **224 px** | Fastest, lowest power draw | ⚡️⚡️⚡️ | ⭐️⭐️⭐️ |
+| **384 px** | Balanced | ⚡️⚡️ | ⭐️⭐️⭐️⭐️ |
+| **512 px** | Most precise (higher CPU) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
 
-> 💡 Tip: Start with **512px** if running on a Mac with Apple Silicon (M1-M5 chips).
-> Intel Macs may heat up when using model > 224px.
+> Start with **512 px** on Apple Silicon Macs. On Intel Macs, 224 px keeps temps and fans quieter.
 
-## 🔔 Alerts
+## Alerts
 
 When nail-biting is detected:
-- A popup indicating detection and confidence appears, and is removed either by clicking the button, waiting 3 seconds or hit the Enter key.
-- A notification can appear (if enabled in macOS **Notifications & Focus**).
 
+- An overlay appears with the detection message, countdown, and “Stay mindful” button.
+- A macOS notification can sound if alerts aren’t muted.
 
-## 🔒 Privacy
+Overlays auto-dismiss after three seconds, or immediately when you press Enter or click the button.
 
-- All processing happens **on-device** using your Mac’s camera feed.
-- No frames, images, or metrics leave your computer.
-- The app does **not** connect to the internet.
+## Privacy
 
+- All processing happens **on-device**. The camera feed never leaves your Mac.
+- No network calls, analytics, or cloud services.
+- You stay in control — pause monitoring any time.
 
-## 🧰 Requirements
+## Requirements
 
 - macOS **15.6 Sequoia** or later  
-- Camera access permission (requested once on first run)
+- Camera permission (requested on first use)
 
+## Feedback
 
-## 💬 Feedback
+Spotted a bug? Have an idea?
 
-Found a bug? Have a suggestion?  
-→ [Open an issue](https://github.com/killian/NailBiteMenu/issues)
-
+→ [Open an issue](https://github.com/killian31/NailBiteMenu/issues)
 
 <p align="center">
-  Made with ❤️ on macOS • © 2025 <a href="https://github.com/killian31">killian31</a>
+  Made on macOS • © 2025 <a href="https://github.com/killian31">killian31</a>
 </p>
