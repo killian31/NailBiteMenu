@@ -19,6 +19,7 @@
 - [Installation](#installation)
 - [Usage](#usage)
   - [Controls](#controls)
+  - [Statistics](#statistics)
   - [Threshold](#threshold)
   - [Model Size](#model-size)
 - [Alerts](#alerts)
@@ -56,6 +57,17 @@ Click the status icon to open the compact control panel. You can:
 - **Toggle alerts and debug stats**
 
 Monitoring uses the built-in camera at a modest frame rate, keeping CPU usage low while still catching gestures.
+
+### Statistics
+
+The **Statistics** view (accessible via the main window) provides a detailed breakdown of your habit trends over time.
+
+- **Range Selection:** Quickly view data for the Last 7 Days, Last 30 Days, Last 90 Days, or All Time.
+- **Key Metrics:** See your total detections, daily average, and trends.
+- **Visualization:** Charts display detection frequency by **Day**, **Weekday**, and **Hour** to help you identify your most active times for biting.
+- **Data Management:** The settings section allows you to permanently reset all tracking data if you want a fresh start.
+
+Detection count is stored locally.
 
 ### Threshold
 
@@ -98,7 +110,7 @@ Overlays auto-dismiss after three seconds, or immediately when you press Enter o
 
 ## Requirements
 
-- macOS **15.6 Sequoia** or later  
+- macOS **15.6 Sequoia** or later  
 - Camera permission (requested on first use)
 
 ## Feedback
@@ -108,5 +120,5 @@ Spotted a bug? Have an idea?
 → [Open an issue](https://github.com/killian31/NailBiteMenu/issues)
 
 <p align="center">
-  Made on macOS • © 2025 <a href="https://github.com/killian31">killian31</a>
+  Made on macOS • © 2025 <a href="https://github.com/killian31">killian31</a>
 </p>
