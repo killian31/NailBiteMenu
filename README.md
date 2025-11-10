@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="NailBiteMenu Icon" width="120" height="120" />
+  <img src="docs/logo.png" alt="NailBiteMenu Icon" width="120" height="120" />
 </p>
 
 <h1 align="center">NailBiteMenu</h1>
