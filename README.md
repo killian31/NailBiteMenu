@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="NailBiteMenu Icon" width="120" height="120" />
+  <img src="docs/logo.png" alt="NailBiteMenu Icon" width="120" height="120" />
 </p>
 
 <h1 align="center">NailBiteMenu</h1>
@@ -26,6 +26,14 @@
 - [Privacy](#privacy)
 - [Requirements](#requirements)
 - [Feedback](#feedback)
+
+## Open Source
+
+The full **NailBiteMenu macOS app**, including its Swift source and Core ML models, is now **open source**.
+You can explore, build, or contribute to it right here:
+
+📂 [`/app`](./app) → contains all app source code and models
+💡 Pull requests and issues are welcome!
 
 ## Installation
 
