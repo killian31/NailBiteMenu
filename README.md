@@ -34,6 +34,7 @@ The full **NailBiteMenu macOS app**, including its Swift source and Core ML mode
 You can explore, build, or contribute to it right here:
 
 📂 [`/app`](./app) → contains all app source code and models
+
 💡 Pull requests and issues are welcome!
 
 ## Installation
