@@ -16,6 +16,7 @@
 
 ## Table of Contents
 
+- [Open Source](#open-source)
 - [Installation](#installation)
 - [Usage](#usage)
   - [Controls](#controls)
