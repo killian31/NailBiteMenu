@@ -94,7 +94,15 @@ final class MonitorViewModel: ObservableObject {
         }
     }
 
+    #if DEBUG
+    /// Design screenshots: show the watching state without opening the camera.
+    var screenshotMode = false
+    #endif
+
     func start() {
+        #if DEBUG
+        if screenshotMode { return }
+        #endif
         ema = 0
         live.confidence = 0
         camera.start()

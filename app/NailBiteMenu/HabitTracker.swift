@@ -28,6 +28,17 @@ final class HabitTracker: ObservableObject {
         load()
     }
 
+    #if DEBUG
+    /// Design screenshots: in-memory history that never touches the data file.
+    init(mockRecords: [Detection], activeDays: Set<Date>) {
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("nailbite-mock.json")
+        storageURL = tmp
+        legacyURL = tmp
+        records = mockRecords
+        self.activeDays = activeDays
+    }
+    #endif
+
     func addDetection(at date: Date = Date(), app: String? = nil, bundleID: String? = nil) {
         records.append(Detection(date: date, app: app, bundleID: bundleID))
         activeDays.insert(Calendar.current.startOfDay(for: date))
