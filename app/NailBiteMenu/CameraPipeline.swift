@@ -16,7 +16,6 @@ final class CameraPipeline: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
     func configure(position: AVCaptureDevice.Position = .front) throws {
         session.beginConfiguration()
-        session.sessionPreset = .vga640x480  // lower res = faster
 
         let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position)
             ?? AVCaptureDevice.default(for: .video)
@@ -26,6 +25,9 @@ final class CameraPipeline: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.inputs.forEach { session.removeInput($0) }
         input = try AVCaptureDeviceInput(device: device)
         if session.canAddInput(input!) { session.addInput(input!) }
+        // 16:9 like the training frames (1280x720), so the model sees the same field of view.
+        // (Checked after adding the input: supported presets depend on the camera.)
+        session.sessionPreset = session.canSetSessionPreset(.hd1280x720) ? .hd1280x720 : .vga640x480
 
         output.alwaysDiscardsLateVideoFrames = true
         output.setSampleBufferDelegate(self, queue: queue)
