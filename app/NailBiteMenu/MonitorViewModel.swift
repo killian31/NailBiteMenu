@@ -20,7 +20,6 @@ enum ModelVariant: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     var displayName: String { "\(rawValue) px" }
-    var imageSize: Int { Int(rawValue)! }
     var mlpackageName: String { "NailBiteClassifier_\(rawValue)" }
 }
 
@@ -99,12 +98,7 @@ final class MonitorViewModel: ObservableObject {
 
     private func loadModel(variant: ModelVariant) {
         do {
-            self.model = try ModelRunner(
-                mlpackageName: variant.mlpackageName,
-                imageSize: variant.imageSize,
-                positiveIsBiting: false,
-                outputsAreProbabilities: false
-            )
+            self.model = try ModelRunner(mlpackageName: variant.mlpackageName)
             print("✅ Loaded model:", variant.mlpackageName)
         } catch {
             print("❌ Model load error:", error)
