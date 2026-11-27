@@ -3,7 +3,6 @@ import Combine
 
 final class AppPreferences: ObservableObject {
     private enum StorageKey {
-        static let modelVariant = "preferences.modelVariant"
         static let threshold = "preferences.threshold"
         static let muteAlerts = "preferences.muteAlerts"
         static let startMonitoring = "preferences.startMonitoringOnLaunch"
@@ -12,13 +11,6 @@ final class AppPreferences: ObservableObject {
     }
 
     private let defaults = UserDefaults.standard
-
-    @Published var modelVariant: ModelVariant {
-        didSet {
-            guard oldValue != modelVariant else { return }
-            defaults.set(modelVariant.rawValue, forKey: StorageKey.modelVariant)
-        }
-    }
 
     @Published var confidenceThreshold: Double {
         didSet {
@@ -55,12 +47,7 @@ final class AppPreferences: ObservableObject {
     }
 
     init() {
-        if let raw = defaults.string(forKey: StorageKey.modelVariant),
-           let stored = ModelVariant(rawValue: raw) {
-            modelVariant = stored
-        } else {
-            modelVariant = .m512
-        }
+        defaults.removeObject(forKey: "preferences.modelVariant") // setting removed in 2.2
 
         if defaults.object(forKey: StorageKey.threshold) != nil {
             confidenceThreshold = defaults.double(forKey: StorageKey.threshold)
