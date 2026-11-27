@@ -31,7 +31,10 @@ final class MonitorViewModel: ObservableObject {
     let live = LiveStats()
     @Published private(set) var lastDetectionDate: Date?
 
-    private let alpha: Double = 0.40
+    // ponytail: at 5 fps, 0.60 fires after 2 confident frames (0.4 s) instead of 3 with 0.40, and a
+    // single spike still can't trigger. Replayed on NBDetect's test+val sessions: median alert delay
+    // 0.53 s -> 0.33 s, same false alerts. Later alerts come from the model's first frames, not smoothing.
+    private let alpha: Double = 0.60
     private var threshold: Double {
             max(0.0, min(1.0, thresholdPercent / 100.0))
         }
