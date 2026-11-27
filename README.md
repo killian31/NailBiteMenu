@@ -20,7 +20,6 @@
 - [Installation](#installation)
 - [Usage](#usage)
   - [Threshold](#threshold)
-  - [Model Size](#model-size)
 - [Alerts](#alerts)
 - [Privacy](#privacy)
 - [Requirements](#requirements)
@@ -54,7 +53,7 @@ NailBite runs from your **menu bar**. The main window has three sections:
 
 - **Today**: how long you've been bite-free, today's and this week's episodes, your bite-free streak, and the apps where biting happened.
 - **Insights**: episodes per day, a weekday × hour heatmap, average episode length, bite-free days, and top trigger apps over 7 days, 30 days, 90 days, or all time.
-- **Settings**: theme (System, Light, Dark), model size, threshold, alerts, and data reset.
+- **Settings**: theme (System, Light, Dark), threshold, alerts, and data reset.
 
 Close the window and monitoring keeps running. The menu bar panel shows the bite-free timer, today's count, and your streak, with buttons to pause or open the app.
 
@@ -71,18 +70,6 @@ The threshold controls how sensitive detection is:
 | **High (≈75%+)** | Only triggers on strong evidence |
 
 Tune it based on lighting, distance to the camera, and how early you want alerts.
-
-### Model Size
-
-Each bundled model trades speed for precision:
-
-| Model | Description | Speed | Accuracy |
-|-------|-------------|-------|----------|
-| **224 px** | Fastest, lowest power draw | ⚡️⚡️⚡️ | ⭐️⭐️⭐️ |
-| **384 px** | Balanced | ⚡️⚡️ | ⭐️⭐️⭐️⭐️ |
-| **512 px** | Most precise (higher CPU) | ⚡️ | ⭐️⭐️⭐️⭐️⭐️ |
-
-> Start with **512 px** on Apple Silicon Macs. On Intel Macs, 224 px keeps temps and fans quieter.
 
 ## Alerts
 

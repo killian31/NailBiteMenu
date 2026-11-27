@@ -13,16 +13,6 @@ final class LiveStats: ObservableObject {
     @Published var memoryMB: Double = 0
 }
 
-enum ModelVariant: String, CaseIterable, Identifiable {
-    case m224 = "224"
-    case m384 = "384"
-    case m512 = "512"
-    var id: String { rawValue }
-
-    var displayName: String { "\(rawValue) px" }
-    var mlpackageName: String { "NailBiteClassifier_\(rawValue)" }
-}
-
 final class MonitorViewModel: ObservableObject {
     private let preferences: AppPreferences
     private let tracker: HabitTracker
@@ -30,15 +20,6 @@ final class MonitorViewModel: ObservableObject {
 
     @Published var isRunning = false {
         didSet { isRunning ? start() : stop() }
-    }
-    @Published var selectedVariant: ModelVariant = .m512 {
-        didSet {
-            guard oldValue != selectedVariant else { return }
-            if preferences.modelVariant != selectedVariant {
-                preferences.modelVariant = selectedVariant
-            }
-            loadModel(variant: selectedVariant)
-        }
     }
     @Published var thresholdPercent: Double = 75 {
             didSet {
@@ -73,7 +54,6 @@ final class MonitorViewModel: ObservableObject {
     init(preferences: AppPreferences, tracker: HabitTracker) {
         self.preferences = preferences
         self.tracker = tracker
-        selectedVariant = preferences.modelVariant
         thresholdPercent = preferences.confidenceThreshold
 
         camera.onFrame = { [weak self] pb in
@@ -89,17 +69,22 @@ final class MonitorViewModel: ObservableObject {
             }
         }
 
-        loadModel(variant: selectedVariant)
+        loadModel()
         bindPreferences()
         if preferences.startMonitoringOnLaunch {
             isRunning = true
         }
     }
 
-    private func loadModel(variant: ModelVariant) {
+    // ponytail: one model. 2.2.0 retrain adds look-alikes (vaping, pencil, cup) and biting from the
+    // new Mac's camera, with a random-reframe augmentation. On NBDetect's test split this camera
+    // scores ROC AUC 0.986 (2.1.0: 0.862). 0.5 ms/frame. Bring back a size setting only if needed.
+    private static let modelName = "NailBiteClassifier_224"
+
+    private func loadModel() {
         do {
-            self.model = try ModelRunner(mlpackageName: variant.mlpackageName)
-            print("✅ Loaded model:", variant.mlpackageName)
+            self.model = try ModelRunner(mlpackageName: Self.modelName)
+            print("✅ Loaded model:", Self.modelName)
         } catch {
             print("❌ Model load error:", error)
             self.model = nil
@@ -206,14 +191,6 @@ final class MonitorViewModel: ObservableObject {
     }
 
     private func bindPreferences() {
-        preferences.$modelVariant
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] newVariant in
-                guard let self, self.selectedVariant != newVariant else { return }
-                self.selectedVariant = newVariant
-            }
-            .store(in: &cancellables)
-
         preferences.$confidenceThreshold
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newValue in

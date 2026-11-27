@@ -21,18 +21,6 @@ struct SettingsView: View {
             }
 
             Section("Monitoring") {
-                Picker("Detection model", selection: $preferences.modelVariant) {
-                    ForEach(ModelVariant.allCases) { variant in
-                        Text(variant.displayName).tag(variant)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                Label(preferences.modelVariant.settingsDescription,
-                      systemImage: preferences.modelVariant.settingsIcon)
-                    .font(.callout)
-                    .foregroundStyle(Color.dsTextSecondary)
-
                 LabeledContent("Confidence threshold") {
                     HStack {
                         Slider(value: $preferences.confidenceThreshold, in: 1...99) {
@@ -112,23 +100,6 @@ struct SettingsView: View {
     }
 }
 
-private extension ModelVariant {
-    var settingsIcon: String {
-        switch self {
-        case .m224: return "hare.fill"
-        case .m384: return "tortoise.fill"
-        case .m512: return "scope"
-        }
-    }
-
-    var settingsDescription: String {
-        switch self {
-        case .m224: return "Fastest inference, lower accuracy"
-        case .m384: return "Balanced speed and accuracy"
-        case .m512: return "Highest accuracy, slightly slower"
-        }
-    }
-}
 
 #Preview {
     let prefs = AppPreferences()
