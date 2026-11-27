@@ -76,9 +76,10 @@ final class MonitorViewModel: ObservableObject {
         }
     }
 
-    // ponytail: one model. The 224 px export matches 384/512 on the test set (ROC AUC 0.978)
-    // at a third of the size; bring back a size setting only if a bigger model measurably wins.
-    private static let modelName = "NailBiteClassifier_224"
+    // ponytail: one model. 2.2.0 retrain with look-alikes (vaping, pencil, cup): 384 px scored
+    // ROC AUC 0.990 and 0 false alerts/h on NBDetect's test split vs 0.988 and 4.2/h at 224 px,
+    // same 8.8 MB, 1.3 ms/frame. Bring back a size setting only if someone needs a slower Mac.
+    private static let modelName = "NailBiteClassifier_384"
 
     private func loadModel() {
         do {
