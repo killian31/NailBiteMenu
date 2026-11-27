@@ -48,10 +48,11 @@ struct StatsView: View {
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 32)
+                .glassGroup()
             }
         }
         .frame(minWidth: 800, minHeight: 600)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .legacyWindowBackground()
         .navigationTitle("")
         .onChange(of: selectedRange) {
             clearChartSelections()
@@ -73,7 +74,7 @@ struct StatsView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Statistics")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.largeTitle.weight(.bold))
                     
                     Text("Track your progress and identify patterns")
                         .font(.system(size: 15))
@@ -82,42 +83,20 @@ struct StatsView: View {
                 
                 Spacer()
                 
-                HStack(spacing: 8) {
+                Picker("Range", selection: $selectedRange) {
                     ForEach(DateRangeOption.allCases) { option in
-                        Button(action: { selectedRange = option }) {
-                            Text(option.rawValue)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(selectedRange == option ? .white : .primary)
-                                .frame(width: 44, height: 32)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .fill(selectedRange == option ? Color.blue : Color.clear)
-                                )
-                        }
-                        .buttonStyle(.plain)
+                        Text(option.rawValue).tag(option)
                     }
                 }
-                .padding(4)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                )
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .controlSize(.large)
+                .fixedSize()
             }
             .padding(.horizontal, 32)
             .padding(.top, 24)
             .padding(.bottom, 20)
         }
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.08),
-                    Color.purple.opacity(0.05),
-                    Color(nsColor: .windowBackgroundColor)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
     }
     
     private var heroMetricsSection: some View {
@@ -138,13 +117,8 @@ struct StatsView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(stats.totalDetections)")
                         .font(.system(size: 48, weight: .bold, design: .rounded))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.orange, .red],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .foregroundStyle(.orange)
+                        .contentTransition(.numericText())
                     
                     Text("Total Detections")
                         .font(.system(size: 14, weight: .medium))
@@ -153,21 +127,7 @@ struct StatsView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 160)
             .padding(24)
-            .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [.orange.opacity(0.3), .red.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            )
+            .card(cornerRadius: 20)
             
             VStack(spacing: 16) {
                 HStack(spacing: 16) {
@@ -238,10 +198,7 @@ struct StatsView: View {
         .frame(maxWidth: .infinity, minHeight: wide ? 64 : 72)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
+        .card(cornerRadius: 16)
     }
     
     
@@ -338,10 +295,7 @@ struct StatsView: View {
             }
         }
         .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
+        .card(cornerRadius: 20)
     }
     
     
@@ -499,10 +453,7 @@ struct StatsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
+        .card(cornerRadius: 20)
     }
     
     

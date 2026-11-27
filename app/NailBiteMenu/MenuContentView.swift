@@ -54,21 +54,14 @@ struct MenuContentView: View {
                 .padding(.vertical, 12)
         }
         .frame(width: 360)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .legacyWindowBackground()
     }
 }
 
 private extension MenuContentView {
     var header: some View {
         HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(menuHeroIconGradient)
-                    .frame(width: 48, height: 48)
-                Image(systemName: "hand.raised.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
+            AppIconView(size: 44)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("NailBite")
@@ -81,11 +74,13 @@ private extension MenuContentView {
             Spacer()
 
             Button(action: toggleMonitoring) {
-                Image(systemName: monitor.isRunning ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundStyle(monitor.isRunning ? Color.orange : Color.blue)
+                Label(monitor.isRunning ? "Pause" : "Start",
+                      systemImage: monitor.isRunning ? "pause.fill" : "play.fill")
+                    .contentTransition(.symbolEffect(.replace))
             }
-            .buttonStyle(.plain)
+            .controlSize(.large)
+            .tint(monitor.isRunning ? .orange : .accentColor)
+            .glassButton(prominent: true)
             .help(monitor.isRunning ? "Pause monitoring" : "Start monitoring")
         }
     }
@@ -148,10 +143,7 @@ private extension MenuContentView {
             }
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
+        .panelCard(cornerRadius: 16)
     }
 
     var controlsSection: some View {
@@ -166,7 +158,7 @@ private extension MenuContentView {
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
                 }
-                Slider(value: $monitor.thresholdPercent, in: 1...99, step: 1)
+                Slider(value: $monitor.thresholdPercent, in: 1...99)
                     .tint(.blue)
                 HStack(spacing: 8) {
                     ForEach(presets) { preset in
@@ -179,10 +171,7 @@ private extension MenuContentView {
                 }
             }
             .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            )
+            .panelCard(cornerRadius: 14)
 
             VStack(alignment: .leading, spacing: 10) {
                 Label("Model size", systemImage: "dial.medium")
@@ -199,16 +188,14 @@ private extension MenuContentView {
                     .foregroundStyle(.secondary)
             }
             .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            )
+            .panelCard(cornerRadius: 14)
 
             HStack(spacing: 10) {
                 CompactToggle(
                     icon: preferences.muteAlerts ? "speaker.slash.fill" : "speaker.wave.2.fill",
                     label: "Sound",
-                    isOn: $preferences.muteAlerts
+                    isOn: Binding(get: { !preferences.muteAlerts },
+                                  set: { preferences.muteAlerts = !$0 })
                 )
                 CompactToggle(
                     icon: "wrench.and.screwdriver",
@@ -228,17 +215,14 @@ private extension MenuContentView {
             statRow(label: "FPS", value: String(format: "%.1f", monitor.fps))
         }
         .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
+        .panelCard(cornerRadius: 14)
     }
 
     var footer: some View {
         HStack(spacing: 8) {
             Image(systemName: "menubar.rectangle")
                 .foregroundStyle(.secondary)
-            Text("Close to keep NailBite in the menu bar. Quit to exit fully.")
+            Text("Closing keeps NailBite in the menu bar.")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Spacer()
@@ -296,20 +280,11 @@ private struct ActionChip: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: systemImage)
-                    .font(.subheadline)
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-            }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            )
+            Label(title, systemImage: systemImage)
+                .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)
+        .controlSize(.large)
+        .glassButton()
     }
 }
 
@@ -328,18 +303,17 @@ private struct CompactToggle: View {
                 Text(label)
                     .font(.subheadline)
                 Spacer()
-                Circle()
-                    .fill(isOn ? Color.accentColor : Color.secondary.opacity(0.3))
-                    .frame(width: 10, height: 10)
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isOn ? Color.accentColor : .secondary)
+                    .contentTransition(.symbolEffect(.replace))
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            )
+            .contentShape(.rect)
+            .panelCard(cornerRadius: 14)
         }
         .buttonStyle(.plain)
+        .accessibilityValue(isOn ? "On" : "Off")
     }
 }
 
@@ -377,15 +351,6 @@ private struct SensitivityPreset: Identifiable {
 
     var id: String { title }
 }
-
-private let menuHeroIconGradient = LinearGradient(
-    colors: [
-        Color(.sRGB, red: 0.98, green: 0.70, blue: 0.32, opacity: 1),
-        Color(.sRGB, red: 1.00, green: 0.85, blue: 0.46, opacity: 1)
-    ],
-    startPoint: .topLeading,
-    endPoint: .bottomTrailing
-)
 
 private extension ModelVariant {
     var description: String {
