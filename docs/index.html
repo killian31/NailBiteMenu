@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#F4F7F6" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#221C20" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F4F4F1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F0F10" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
       content="NailBite is a free, open-source Mac menu bar app that notices when you bite your nails, using your camera on-device, and helps you stop."
@@ -38,8 +38,9 @@
         <div class="hero-copy">
           <h1>Catch yourself before you bite</h1>
           <p class="lead">
-            NailBite watches through your Mac’s camera and tells you when your hand goes to your mouth. It runs
-            entirely on your Mac, and it shows when and where you bite so you can work on the pattern.
+            NailBite watches through your Mac’s camera and lights up the edges of your screen when your hand
+            reaches your mouth. It runs entirely on your Mac, and it shows when and where you bite so you can work
+            on the pattern.
           </p>
           <div class="cta">
             <a class="btn" href="https://github.com/killian31/NailBiteMenu/releases/latest/download/NailBiteMenu.dmg">Download for Mac</a>
@@ -50,14 +51,10 @@
 
         <div class="hero-shot">
           <picture>
-            <source srcset="img/today-dark.png" media="(prefers-color-scheme: dark)" />
-            <img src="img/today-light.png" width="1152" height="852" fetchpriority="high"
-                 alt="NailBite’s Today screen: bite-free for 1 day 19 hours, a 2-day streak, and the apps where biting happened this week." />
+            <source srcset="img/alert-dark.jpg" media="(prefers-color-scheme: dark)" />
+            <img src="img/alert-light.jpg" width="1600" height="1039" fetchpriority="high"
+                 alt="The NailBite alert over a Mac desktop: the screen edges glow red and a label at the top reads Hands down, Xcode." />
           </picture>
-          <div class="banner hero-banner" aria-hidden="true">
-            <span class="badge"><svg viewBox="0 0 24 24"><use href="#hand" /></svg></span>
-            <span><strong>Hands down</strong><small>Nail-biting detected in Zoom</small></span>
-          </div>
         </div>
       </section>
 
@@ -66,13 +63,14 @@
 
         <article class="step reveal">
           <div class="step-copy">
-            <h3>A banner when it happens</h3>
+            <h3>The screen edges light up</h3>
             <p>
-              When your hand reaches your mouth, a small banner appears under the menu bar and names the app
-              you’re in. It doesn’t take focus or switch Spaces, so you can keep typing.
+              When your fingers reach your mouth, the edges of your screen glow red within a fraction of a second,
+              with a short ping and a label naming the app you’re in. It doesn’t take focus or switch Spaces, so
+              you can keep typing. The glow, the label and the sound can each be turned off.
             </p>
           </div>
-          <div class="step-visual desk" role="img" aria-label="The NailBite banner under the macOS menu bar while Xcode is open: Hands down, nail-biting detected in Xcode.">
+          <div class="step-visual desk" role="img" aria-label="A code editor under the macOS menu bar while the screen edges glow red and a label reads Hands down, Xcode.">
             <div class="menubar" aria-hidden="true">
               <span class="mb-app">Xcode</span><span>File</span><span>Edit</span><span>View</span><span class="mb-more">Product</span>
               <span class="mb-time">10:42</span>
@@ -84,9 +82,10 @@
               <span>&nbsp;&nbsp;&nbsp;&nbsp;Alerts.gentle(app: app)</span>
               <span>&nbsp;&nbsp;}</span>
             </div>
-            <div class="banner desk-banner" aria-hidden="true">
-              <span class="badge"><svg viewBox="0 0 24 24"><use href="#hand" /></svg></span>
-              <span><strong>Hands down</strong><small>Nail-biting detected in Xcode</small></span>
+            <div class="glow" aria-hidden="true"></div>
+            <div class="pill" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><use href="#hand" /></svg>
+              <strong>Hands down</strong><span>Xcode</span>
             </div>
           </div>
         </article>
@@ -95,23 +94,18 @@
           <div class="step-copy">
             <h3>A 30-second reset if you keep going</h3>
             <p>
-              If biting continues, NailBite asks you to rest your hands for 30 seconds while a ring paces your
-              breathing, four seconds in and four out. Giving your hands something else to do is the
-              competing-response step of habit reversal training, a behavioral therapy used for nail biting. You
-              can turn the reset off in Settings.
+              If biting continues, NailBite offers a 30-second reset. You lay your hands flat while a countdown
+              paces your breathing, four seconds in and four out, and the red at the edges fades with each breath.
+              Giving your hands something else to do is the competing-response step of habit reversal training, a
+              behavioral therapy used for nail biting. You can turn the reset off in Settings.
             </p>
           </div>
-          <div class="step-visual reset-pair">
+          <div class="step-visual">
             <picture>
-              <source srcset="img/reset-dark.png" media="(prefers-color-scheme: dark)" />
-              <img class="card-shot" src="img/reset-light.png" width="464" height="278" loading="lazy"
-                   alt="Reset prompt: You’re still biting. Rest your hands for 30 seconds. Buttons: Not now, Start 30-second reset." />
+              <source srcset="img/reset-dark.jpg" media="(prefers-color-scheme: dark)" />
+              <img class="shot" src="img/reset-light.jpg" width="1600" height="1039" loading="lazy"
+                   alt="The reset over a dimmed screen: a 17-second countdown, Breathe out, hands flat away from your face, and an End early button." />
             </picture>
-            <div class="breath" role="img" aria-label="Breathing guide: an orange ring that swells for four seconds and settles for four.">
-              <div class="breath-fill"></div>
-              <svg class="breath-ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" /></svg>
-              <span class="breath-label"><span class="in">Breathe in</span><span class="out">Breathe out</span></span>
-            </div>
           </div>
         </article>
 
@@ -119,33 +113,35 @@
           <div class="step-copy">
             <h3>When and where you bite</h3>
             <p>
-              Insights groups detections into episodes, maps them by weekday and hour, and lists the apps you were
-              in. If it’s always the morning standup in Zoom, you’ll see it. Bite-free days and streaks only count
-              days you used your Mac.
+              Insights counts your episodes for the period and compares them with the period before. A daily chart
+              shows the trend, a weekday by hour map shows when it happens, and a list shows the apps you were in.
+              If it’s always the morning standup in Zoom, you’ll see it. Bite-free days and streaks only count days
+              you used your Mac.
             </p>
           </div>
           <div class="step-visual">
             <picture>
               <source srcset="img/insights-dark.png" media="(prefers-color-scheme: dark)" />
-              <img src="img/insights-light.png" width="1152" height="852" loading="lazy"
-                   alt="Insights screen: episodes per day trending down, and a weekday by hour heatmap with clusters mid-morning and mid-afternoon." />
+              <img src="img/insights-light.png" width="1548" height="1600" loading="lazy"
+                   alt="Insights screen: the episode count for the last 30 days and its change, a daily chart with a 7-day average line, a weekday by hour map and the top trigger apps." />
             </picture>
           </div>
         </article>
 
         <article class="step reveal">
           <div class="step-copy">
-            <h3>In the menu bar all day</h3>
+            <h3>Your numbers in the menu bar</h3>
             <p>
               Close the window and NailBite keeps watching. The menu bar panel shows how long you’ve gone without
-              biting, today’s count and your streak, with buttons to pause or open Insights.
+              biting, a live meter of what the camera sees, and your count for today, this week or this month next
+              to the one before.
             </p>
           </div>
           <div class="step-visual narrow">
             <picture>
               <source srcset="img/menu-dark.png" media="(prefers-color-scheme: dark)" />
-              <img src="img/menu-light.png" width="386" height="377" loading="lazy"
-                   alt="Menu bar panel: bite-free for 1 day 19 hours, 0 episodes today, 2 bite-free days, with Pause, Open NailBite and Insights buttons." />
+              <img src="img/menu-light.png" width="872" height="1222" loading="lazy"
+                   alt="Menu bar panel: the bite-free time, a live signal meter, and today’s episode count with an hourly chart." />
             </picture>
           </div>
         </article>

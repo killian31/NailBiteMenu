@@ -1,40 +1,39 @@
-/* NailBite tokens, mirrored from app/NailBiteMenu/DesignSystem.swift.
-   Roles: accent (indigo) = actions, bite (pumpkin) = biting only, win (mint) = progress. */
+/* NailBite tokens, mirrored from app/NailBiteMenu/DesignSystem.swift ("Signal").
+   Ink on paper plus one color with one meaning: vermilion = biting happened.
+   Everything you can press is ink. */
 :root {
-  --bg: #f4f7f6;
+  --bg: #f4f4f1;
   --surface: #ffffff;
-  --surface-raised: #edf1ef;
-  --hairline: rgb(50 41 47 / 0.09);
-  --text: #32292f;
-  --text-2: #575366;
-  --text-3: #6e7dab;
-  --accent: #5762d5;
-  --accent-fill: #5762d5;
-  --bite: #ff8c42;
-  --bite-tint: #ffe6d4;
+  --surface-raised: #ededea;
+  --hairline: rgb(21 21 23 / 0.09);
+  --text: #151517;
+  --text-2: #4a4a4f;
+  --text-3: #6b6b6b;
+  --on-ink: #ffffff;
+  --signal: #e5432a;
+  --signal-text: #c8341c;
   --shadow-small: 0 1px 2px rgb(0 0 0 / 0.05);
   --shadow-float: 0 8px 24px rgb(0 0 0 / 0.08);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --max: 1120px;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
-  --font-round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #221c20;
-    --surface: #32292f;
-    --surface-raised: #3d343b;
-    --hairline: rgb(241 238 243 / 0.09);
-    --text: #f1eef3;
-    --text-2: #a9a3b8;
-    --text-3: #8c8399;
-    --accent: #8c95ec;
-    --accent-fill: #5f6ad9;
-    --bite-tint: #4a2a18;
-    --shadow-float: 0 8px 24px rgb(0 0 0 / 0.3);
+    --bg: #0f0f10;
+    --surface: #18181a;
+    --surface-raised: #232326;
+    --hairline: rgb(242 242 240 / 0.09);
+    --text: #f2f2f0;
+    --text-2: #a1a1a6;
+    --text-3: #8e8e93;
+    --on-ink: #111112;
+    --signal: #ff5a3d;
+    --signal-text: #ff5a3d;
+    --shadow-float: 0 8px 24px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -48,8 +47,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 img { display: block; max-width: 100%; height: auto; }
-a { color: var(--accent); text-underline-offset: 3px; }
-a:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+a { color: var(--text); text-decoration-color: var(--text-3); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--text); }
+a:focus-visible, .btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; border-radius: 6px; }
 h1, h2, h3 { margin: 0; font-weight: 600; }
 p, dl, dd, ol { margin: 0; }
 
@@ -70,20 +70,20 @@ p, dl, dd, ol { margin: 0; }
 .nav nav a { color: var(--text-2); text-decoration: none; font-size: 15px; transition: color 0.15s var(--ease); }
 .nav nav a:hover { color: var(--text); }
 
-/* Buttons */
+/* Buttons: ink, like the app's Pause button */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   height: 44px; padding: 0 20px; border-radius: 10px;
-  background: var(--accent-fill); color: #fff; font-size: 16px; font-weight: 500; text-decoration: none;
+  background: var(--text); color: var(--on-ink); font-size: 16px; font-weight: 500; text-decoration: none;
   transition: background-color 0.15s var(--ease), transform 0.15s var(--ease);
 }
-.btn:hover { background: color-mix(in srgb, var(--accent-fill) 88%, #000); }
+.btn:hover { background: color-mix(in srgb, var(--text) 84%, var(--bg)); }
 .btn:active { transform: scale(0.98); }
 .btn-quiet { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--hairline), var(--shadow-small); }
 .btn-quiet:hover { background: var(--surface-raised); }
-.btn-small { height: 34px; padding: 0 14px; font-size: 14px; border-radius: 8px; }
+.btn-small { height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px; }
 
-/* Hero */
+/* Hero: copy left, the real alert right */
 .hero {
   max-width: var(--max); margin: 0 auto; padding: 64px 32px 96px;
   min-height: calc(100svh - 60px);
@@ -93,22 +93,7 @@ h1 { font-size: clamp(40px, 5.6vw, 64px); line-height: 1.04; letter-spacing: -0.
 .lead { margin-top: 20px; font-size: 19px; line-height: 1.55; color: var(--text-2); max-width: 32rem; }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
 .meta { margin-top: 16px; font-size: 14px; color: var(--text-2); }
-.hero-shot { position: relative; }
-.hero-banner { position: absolute; left: 50%; top: 4%; translate: -50% 0; }
-
-/* The alert banner, same as the app's */
-.banner {
-  display: inline-flex; align-items: center; gap: 12px;
-  padding: 8px 20px 8px 8px; border-radius: 28px;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 0 0 1px var(--hairline), var(--shadow-float);
-  white-space: nowrap; color: var(--text);
-}
-.banner strong { display: block; font-size: 15px; font-weight: 600; line-height: 20px; }
-.banner small { display: block; font-size: 13px; line-height: 18px; color: var(--text-2); }
-.badge { width: 36px; height: 36px; border-radius: 50%; background: var(--bite); color: #32292f; display: grid; place-items: center; flex: none; }
-.badge svg { width: 18px; height: 18px; }
+.hero-shot img, .shot { border-radius: 12px; box-shadow: 0 0 0 1px var(--hairline), var(--shadow-float); }
 
 /* Sections */
 section h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.15; letter-spacing: -0.02em; }
@@ -121,9 +106,9 @@ section h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.15; letter-spac
 .step:nth-of-type(even) .step-copy { order: 2; }
 .step h3 { font-size: 24px; line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 12px; }
 .step-copy p { color: var(--text-2); }
-.step-visual.narrow img { max-width: 386px; margin: 0 auto; }
+.step-visual.narrow img { max-width: min(436px, 100%); margin: 0 auto; }
 
-/* Step 1: a desk scene, menu bar + editor + the banner */
+/* Step 1: a desk scene, menu bar + editor, lit by the alert */
 .desk {
   position: relative; height: 280px; overflow: hidden; border-radius: 16px;
   background: var(--surface); box-shadow: 0 0 0 1px var(--hairline), var(--shadow-float);
@@ -137,21 +122,22 @@ section h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.15; letter-spac
 .mb-time { margin-left: auto; color: var(--text-2); font-variant-numeric: tabular-nums; }
 .code { display: grid; gap: 4px; padding: 88px 24px 0; font: 13px/20px var(--font-mono); color: var(--text-3); }
 .code i { font-style: normal; color: var(--text-2); }
-.desk-banner { position: absolute; top: 40px; left: 50%; translate: -50% 0; }
-
-/* Step 2: reset prompt + live breathing ring */
-.reset-pair { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: center; }
-.card-shot { border-radius: 22px; box-shadow: 0 0 0 1px var(--hairline), var(--shadow-float); }
-.breath {
-  position: relative; aspect-ratio: 1; border-radius: 22px;
-  background: var(--surface); box-shadow: 0 0 0 1px var(--hairline), var(--shadow-float);
-  display: grid; place-items: center;
+/* The alert itself: light from the edges, strongest at the border, like the app's falloff */
+.glow {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow:
+    inset 0 0 0 3px var(--signal),
+    inset 0 0 24px 4px color-mix(in srgb, var(--signal) 70%, transparent),
+    inset 0 0 72px 16px color-mix(in srgb, var(--signal) 30%, transparent);
 }
-.breath-fill { position: absolute; width: 62%; aspect-ratio: 1; border-radius: 50%; background: var(--bite-tint); transform: scale(0.86); }
-.breath-ring { position: absolute; width: 70%; transform: rotate(-90deg); overflow: visible; }
-.breath-ring circle { fill: none; stroke: var(--bite); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 276.5; stroke-dashoffset: 46; }
-.breath-label { position: relative; font: 600 17px/1 var(--font-round); }
-.breath-label .out { display: none; }
+.pill {
+  position: absolute; top: 40px; left: 50%; translate: -50% 0;
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px 0 12px; border-radius: 18px;
+  background: #c8341c; color: #fff; font-size: 15px; white-space: nowrap;
+}
+.pill svg { width: 18px; height: 18px; }
+.pill strong { font-weight: 600; }
+.pill span { opacity: 0.8; }
 
 /* Privacy */
 .privacy { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: 64px; align-items: start; }
@@ -179,33 +165,24 @@ section h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.15; letter-spac
 
 /* Motion. One curve; everything is static when motion is reduced or unsupported. */
 @media (prefers-reduced-motion: no-preference) {
-  /* On load: the hero copy rises once, then the banner arrives on the screenshot */
+  /* On load: the hero copy rises once, then the screenshot */
   .hero-copy { animation: rise 0.6s var(--ease) both; }
   .hero-shot { animation: rise 0.7s 0.08s var(--ease) both; }
-  .hero-banner { animation: banner-in 0.5s 1.1s var(--ease) both; }
 
-  /* The breathing ring is the feature itself, so it runs: 8 s per breath, 30 s countdown */
-  .breath-fill { animation: breathe 8s ease-in-out infinite; }
-  .breath-ring circle { animation: countdown 30s linear infinite; }
-  .breath-label .out { display: block; position: absolute; inset: 0; opacity: 0; animation: label-out 8s ease-in-out infinite; }
-  .breath-label .in { animation: label-in 8s ease-in-out infinite; }
-
-  /* Scroll: sections rise as they enter; the step 1 banner drops in as its scene comes into view;
-     the nav gains a hairline after the first few pixels. Browsers without scroll timelines show it all static. */
+  /* Scroll: sections rise as they enter. In step 1 the alert arrives the way the app does it,
+     the edge light first and fast, the label right after. Browsers without scroll timelines show it lit. */
   @supports (animation-timeline: view()) {
     .reveal { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
-    .desk-banner { animation: banner-in linear both; animation-timeline: --desk; animation-range: entry 70% cover 45%; }
+    .glow { animation: light-up linear both; animation-timeline: --desk; animation-range: entry 80% cover 40%; }
+    .pill { animation: label-in linear both; animation-timeline: --desk; animation-range: entry 90% cover 45%; }
     .nav { animation: nav-line linear both; animation-timeline: scroll(); animation-range: 0 48px; }
   }
 }
 
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
-@keyframes banner-in { from { opacity: 0; transform: translateY(-12px) scale(0.97); } }
+@keyframes light-up { from { opacity: 0; } 30% { opacity: 1; } }
+@keyframes label-in { from { opacity: 0; transform: translateY(-8px); } 40% { opacity: 1; transform: none; } }
 @keyframes nav-line { to { border-bottom-color: var(--hairline); } }
-@keyframes breathe { 0%, 100% { transform: scale(0.72); } 50% { transform: scale(1); } }
-@keyframes countdown { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 276.5; } }
-@keyframes label-in { 0%, 42% { opacity: 1; } 50%, 92% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes label-out { 0%, 42% { opacity: 0; } 50%, 92% { opacity: 1; } 100% { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -226,11 +203,6 @@ section h2 { font-size: clamp(28px, 3.4vw, 40px); line-height: 1.15; letter-spac
   .hero, .how, .privacy, .install { padding-left: 16px; padding-right: 16px; }
   .footer { padding-left: 16px; padding-right: 16px; }
   h1 { font-size: 40px; }
-  .reset-pair { grid-template-columns: 1fr; }
-  .breath { max-width: 240px; width: 100%; justify-self: center; }
-  .hero-banner { top: -8px; }
-  .banner { padding-right: 16px; }
-  .banner small { font-size: 12px; }
   .mb-more { display: none; }
   .code { padding-left: 16px; font-size: 12px; }
 }
