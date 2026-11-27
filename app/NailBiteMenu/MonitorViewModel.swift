@@ -2,6 +2,16 @@ import Foundation
 import Combine
 import CoreVideo
 import Darwin.Mach
+import AppKit
+
+/// Values that change several times a second. Kept off `MonitorViewModel` so windows that only
+/// need `isRunning` don't re-render on every camera frame; only the menu panel observes this.
+final class LiveStats: ObservableObject {
+    @Published var confidence: Double = 0
+    @Published var fps: Double = 0
+    @Published var cpuPercent: Double = 0
+    @Published var memoryMB: Double = 0
+}
 
 enum ModelVariant: String, CaseIterable, Identifiable {
     case m224 = "224"
@@ -38,20 +48,22 @@ final class MonitorViewModel: ObservableObject {
                 }
             }
         }
-    @Published private(set) var smoothedConfidence: Double = 0
+    let live = LiveStats()
     @Published private(set) var lastDetectionDate: Date?
 
     private let alpha: Double = 0.40
     private var threshold: Double {
             max(0.0, min(1.0, thresholdPercent / 100.0))
         }
-    private var lastAlert = Date.distantPast
-    private var cooldownSec: TimeInterval = 2
+    private var lastRecorded = Date.distantPast
+    private var lastHit = Date.distantPast
+    private var episodeStart = Date.distantPast
+    private var escalated = false
+    private let recordEvery: TimeInterval = 2
+    // ponytail: fixed 8 s before escalating; expose in Settings if people want it tunable.
+    private let escalateAfter: TimeInterval = 8
     private var ema: Double = 0.0
     @Published var showDebug: Bool = false
-    @Published private(set) var fps: Double = 0
-    @Published private(set) var cpuPercent: Double = 0
-    @Published private(set) var memoryMB: Double = 0
     private var statsTimer: Timer?
     private var lastInferAt: CFAbsoluteTime = CFAbsoluteTimeGetCurrent()
     private var fpsEMA: Double = 0
@@ -72,7 +84,8 @@ final class MonitorViewModel: ObservableObject {
                 let dt = max(1e-6, CFAbsoluteTimeGetCurrent() - t0)
                 let instFPS = 1.0 / dt
                 self.fpsEMA = 0.85 * self.fpsEMA + 0.15 * instFPS
-                DispatchQueue.main.async { self.fps = self.fpsEMA }
+                let fps = self.fpsEMA
+                DispatchQueue.main.async { if self.showDebug { self.live.fps = fps } }
                 self.handle(prob: p)
             }
         }
@@ -101,7 +114,7 @@ final class MonitorViewModel: ObservableObject {
 
     func start() {
         ema = 0
-        smoothedConfidence = 0
+        live.confidence = 0
         camera.start()
         startStatsTimer()
     }
@@ -109,7 +122,7 @@ final class MonitorViewModel: ObservableObject {
     func stop()  {
         camera.stop()
         ema = 0
-        smoothedConfidence = 0
+        live.confidence = 0
         stopStatsTimer()
     }
 
@@ -117,23 +130,43 @@ final class MonitorViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.ema = (1 - self.alpha) * self.ema + self.alpha * prob
             let smoothed = max(0.0, min(1.0, self.ema))
-            self.smoothedConfidence = smoothed
+            if abs(self.live.confidence - smoothed) >= 0.005 { self.live.confidence = smoothed }
 
-            if smoothed >= self.threshold, Date().timeIntervalSince(self.lastAlert) >= self.cooldownSec {
-                self.lastAlert = Date()
-                self.lastDetectionDate = self.lastAlert
-                Alerts.postDetectionAlert(confidence: smoothed)
-                self.tracker.addDetection(at: self.lastAlert)
-            }
+            guard smoothed >= self.threshold else { return }
+            self.registerHit(at: Date())
         }
     }
     
+    /// One alert per episode: banner first, full-screen reset if biting continues.
+    private func registerHit(at now: Date) {
+        // Our own windows aren't a trigger worth reporting.
+        let app = NSWorkspace.shared.frontmostApplication.flatMap { $0 == NSRunningApplication.current ? nil : $0 }
+        if now.timeIntervalSince(lastHit) > Episode.gap {
+            episodeStart = now
+            escalated = false
+            Alerts.gentle(app: app?.localizedName)
+        } else if !escalated, preferences.interruptIfContinuing,
+                  now.timeIntervalSince(episodeStart) >= escalateAfter {
+            escalated = true
+            Alerts.interrupt()
+        }
+        lastHit = now
+
+        if now.timeIntervalSince(lastRecorded) >= recordEvery {
+            lastRecorded = now
+            lastDetectionDate = now
+            tracker.addDetection(at: now, app: app?.localizedName, bundleID: app?.bundleIdentifier)
+        }
+    }
+
     private func startStatsTimer() {
         stopStatsTimer()
         statsTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             guard let self else { return }
-            self.cpuPercent = Self.currentProcessCPU()
-            self.memoryMB   = Double(Self.currentResidentBytes()) / (1024.0 * 1024.0)
+            self.tracker.markActive()
+            guard self.showDebug else { return }
+            self.live.cpuPercent = Self.currentProcessCPU()
+            self.live.memoryMB = Double(Self.currentResidentBytes()) / (1024.0 * 1024.0)
         }
         if let t = statsTimer { RunLoop.main.add(t, forMode: .common) }
     }

@@ -7,6 +7,8 @@ final class AppPreferences: ObservableObject {
         static let threshold = "preferences.threshold"
         static let muteAlerts = "preferences.muteAlerts"
         static let startMonitoring = "preferences.startMonitoringOnLaunch"
+        static let interrupt = "preferences.interruptIfContinuing"
+        static let appearance = "preferences.appearance"
     }
 
     private let defaults = UserDefaults.standard
@@ -29,8 +31,20 @@ final class AppPreferences: ObservableObject {
         didSet {
             guard oldValue != muteAlerts else { return }
             defaults.set(muteAlerts, forKey: StorageKey.muteAlerts)
-            Alerts.setMuted(muteAlerts)
+            Alerts.isMuted = muteAlerts
         }
+    }
+
+    @Published var appearance: AppAppearance {
+        didSet {
+            defaults.set(appearance.rawValue, forKey: StorageKey.appearance)
+            appearance.apply()
+        }
+    }
+
+    /// Escalate to the full-screen reset when biting continues after the banner.
+    @Published var interruptIfContinuing: Bool {
+        didSet { defaults.set(interruptIfContinuing, forKey: StorageKey.interrupt) }
     }
 
     @Published var startMonitoringOnLaunch: Bool {
@@ -66,6 +80,11 @@ final class AppPreferences: ObservableObject {
             startMonitoringOnLaunch = true
         }
 
-        Alerts.setMuted(muteAlerts)
+        interruptIfContinuing = defaults.object(forKey: StorageKey.interrupt) as? Bool ?? true
+        appearance = defaults.string(forKey: StorageKey.appearance).flatMap(AppAppearance.init) ?? .system
+        let initial = appearance
+        DispatchQueue.main.async { initial.apply() } // NSApp isn't ready during init
+
+        Alerts.isMuted = muteAlerts
     }
 }

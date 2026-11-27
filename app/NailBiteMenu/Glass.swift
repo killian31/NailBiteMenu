@@ -1,43 +1,24 @@
 import SwiftUI
 
-// Liquid Glass on macOS 26+, the original opaque look on macOS 15.
+// Surfaces use the design system colors on every macOS version (that's the app's identity).
+// Liquid Glass is kept where it belongs on macOS 26+: buttons, and alerts floating over other apps.
 extension View {
-    /// Content card: glass on macOS 26+, solid control background before.
-    @ViewBuilder
-    func card(cornerRadius: CGFloat = 18) -> some View {
-        if #available(macOS 26, *) {
-            glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
-        } else {
-            background(
+    /// Content card: brand surface with a hairline border.
+    func card(cornerRadius: CGFloat = DS.Radius.card) -> some View {
+        background(Color.dsSurface, in: .rect(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor))
+                    .strokeBorder(Color.dsBorder, lineWidth: 1)
             )
-        }
     }
 
-    /// Card inside a surface that is already glass (the menu bar panel): a quiet fill, no glass-on-glass.
-    @ViewBuilder
-    func panelCard(cornerRadius: CGFloat = 16) -> some View {
-        if #available(macOS 26, *) {
-            frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quinary, in: .rect(cornerRadius: cornerRadius))
-        } else {
-            frame(maxWidth: .infinity, alignment: .leading)
-                .card(cornerRadius: cornerRadius)
-        }
+    /// Full-width card for the menu panel.
+    func panelCard(cornerRadius: CGFloat = DS.Radius.tile) -> some View {
+        frame(maxWidth: .infinity, alignment: .leading)
+            .card(cornerRadius: cornerRadius)
     }
 
-    /// Interactive glass for a custom tappable card (macOS 26+), plain card before.
-    @ViewBuilder
-    func interactiveCard(cornerRadius: CGFloat = 18) -> some View {
-        if #available(macOS 26, *) {
-            glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
-        } else {
-            card(cornerRadius: cornerRadius)
-        }
-    }
-
-    /// Glass button style on macOS 26+, bordered before.
+    /// Glass button style on macOS 26+, bordered before. Tinted by the accent color asset.
     @ViewBuilder
     func glassButton(prominent: Bool = false) -> some View {
         if #available(macOS 26, *) {
@@ -47,23 +28,15 @@ extension View {
         }
     }
 
-    /// Opaque window background only where glass isn't available.
+    /// Floating surface for alerts: glass on macOS 26+, material before.
     @ViewBuilder
-    func legacyWindowBackground() -> some View {
+    func floatingSurface<S: Shape>(_ shape: S) -> some View {
         if #available(macOS 26, *) {
-            self
+            glassEffect(.regular, in: shape)
         } else {
-            background(Color(nsColor: .windowBackgroundColor))
-        }
-    }
-
-    /// Groups sibling glass shapes so they blend (macOS 26+).
-    @ViewBuilder
-    func glassGroup(spacing: CGFloat = 14) -> some View {
-        if #available(macOS 26, *) {
-            GlassEffectContainer(spacing: spacing) { self }
-        } else {
-            self
+            background(.regularMaterial, in: shape)
+                .overlay(shape.stroke(Color.dsBorder, lineWidth: 1))
+                .shadow(color: .black.opacity(0.2), radius: 16, y: 6)
         }
     }
 }
@@ -77,6 +50,21 @@ struct AppIconView: View {
             .resizable()
             .interpolation(.high)
             .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}
+
+/// Pumpkin disc with a dark glyph: the "bite" mark used by alerts.
+/// (Pumpkin is too light for a white glyph, and too light on its own as an icon on white.)
+struct BiteBadge: View {
+    var size: CGFloat = 36
+
+    var body: some View {
+        Image(systemName: "hand.raised.fill")
+            .font(.system(size: size * 0.48, weight: .semibold))
+            .foregroundStyle(Color(light: 0x32292F, dark: 0x32292F))
+            .frame(width: size, height: size)
+            .background(Color.dsBite, in: .circle)
             .accessibilityHidden(true)
     }
 }

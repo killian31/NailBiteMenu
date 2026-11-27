@@ -15,24 +15,24 @@ struct NailBiteMenuApp: App {
         _tracker = StateObject(wrappedValue: tracker)
         
         _monitor = StateObject(wrappedValue: MonitorViewModel(preferences: prefs, tracker: tracker))
-        
-        Alerts.configure()
+
     }
 
     var body: some Scene {
-        WindowGroup("NailBite Home", id: "home") {
-            HomeView(monitor: monitor, preferences: preferences, tracker: tracker)
+        Window("NailBite", id: "home") {
+            MainView(monitor: monitor, preferences: preferences, tracker: tracker)
         }
         .commands {
             AppTerminationCommands()
         }
 
         Settings {
-            SettingsView(preferences: preferences, tracker: tracker)
+            SettingsView(preferences: preferences, tracker: tracker, monitor: monitor)
+                .frame(width: 520, height: 720)
         }
 
         MenuBarExtra {
-            MenuBarPanel(monitor: monitor, preferences: preferences)
+            MenuBarPanel(monitor: monitor, live: monitor.live, tracker: tracker)
         } label: {
             MenuBarStatus(isRunning: monitor.isRunning)
         }
@@ -41,22 +41,19 @@ struct NailBiteMenuApp: App {
 }
 
 private struct MenuBarPanel: View {
-    @ObservedObject var monitor: MonitorViewModel
-    @ObservedObject var preferences: AppPreferences
+    let monitor: MonitorViewModel
+    let live: LiveStats
+    let tracker: HabitTracker
     @Environment(\.openWindow) private var openWindow
-    @Environment(\.openSettings) private var openSettings
+    @Environment(\.dismiss) private var dismiss
+    @AppStorage(MainSection.storageKey) private var section: MainSection = .today
 
     var body: some View {
-        MenuContentView(
-            monitor: monitor,
-            preferences: preferences,
-            onOpenApp: { presentHomeWindow(using: openWindow) },
-            onOpenSettings: { openSettingsScene() }
-        )
-    }
-
-    private func openSettingsScene() {
-        presentSettingsScene(using: openSettings)
+        MenuContentView(monitor: monitor, live: live, tracker: tracker) { target in
+            section = target
+            dismiss()
+            presentHomeWindow(using: openWindow)
+        }
     }
 }
 
@@ -80,20 +77,8 @@ private struct MenuBarStatus: View {
     let isRunning: Bool
 
     var body: some View {
-        Image(systemName: iconName)
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(iconPrimaryColor, iconSecondaryColor)
-    }
-
-    private var iconName: String {
-        "hand.raised.fill"
-    }
-
-    private var iconPrimaryColor: Color {
-        isRunning ? .mint : .secondary
-    }
-
-    private var iconSecondaryColor: Color {
-        isRunning ? .blue : .secondary.opacity(0.4)
+        // Template symbol: macOS tints it to match the menu bar, like every native item.
+        Image(systemName: isRunning ? "hand.raised.fill" : "hand.raised.slash")
+            .accessibilityLabel(isRunning ? "NailBite, monitoring" : "NailBite, paused")
     }
 }
