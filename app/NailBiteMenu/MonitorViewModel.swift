@@ -76,10 +76,10 @@ final class MonitorViewModel: ObservableObject {
         }
     }
 
-    // ponytail: one model. 2.2.0 retrain with look-alikes (vaping, pencil, cup): 384 px scored
-    // ROC AUC 0.990 and 0 false alerts/h on NBDetect's test split vs 0.988 and 4.2/h at 224 px,
-    // same 8.8 MB, 1.3 ms/frame. Bring back a size setting only if someone needs a slower Mac.
-    private static let modelName = "NailBiteClassifier_384"
+    // ponytail: one model. 2.2.0 retrain adds look-alikes (vaping, pencil, cup) and biting from the
+    // new Mac's camera, with a random-reframe augmentation. On NBDetect's test split this camera
+    // scores ROC AUC 0.986 (2.1.0: 0.862). 0.5 ms/frame. Bring back a size setting only if needed.
+    private static let modelName = "NailBiteClassifier_224"
 
     private func loadModel() {
         do {
