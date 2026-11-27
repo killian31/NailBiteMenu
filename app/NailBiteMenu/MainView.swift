@@ -22,6 +22,14 @@ enum MainSection: String, CaseIterable, Identifiable {
         }
     }
 
+    var shortcut: KeyEquivalent {
+        switch self {
+        case .today: return "1"
+        case .insights: return "2"
+        case .settings: return "3"
+        }
+    }
+
     /// Shared with the menu panel so its buttons can open a specific section.
     static let storageKey = "mainSection"
 }
@@ -33,12 +41,9 @@ struct MainView: View {
     @AppStorage(MainSection.storageKey) private var section: MainSection = .today
 
     var body: some View {
-        NavigationSplitView {
-            List(MainSection.allCases, selection: Binding(get: { section }, set: { if let s = $0 { section = s } })) { item in
-                Label(item.title, systemImage: item.symbol).tag(item)
-            }
-            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 240)
-        } detail: {
+        HStack(spacing: 0) {
+            Sidebar(section: $section, isRunning: monitor.isRunning)
+            Rectangle().fill(Color.dsBorder).frame(width: 1)
             Group {
                 switch section {
                 case .today: TodayView(monitor: monitor, tracker: tracker)
@@ -47,23 +52,95 @@ struct MainView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.dsBackground)
-            .foregroundStyle(Color.dsText)
-            .transition(.opacity)
-            .animation(DS.Motion.snappy, value: section)
         }
+        .background(Color.dsBackground)
+        .foregroundStyle(Color.dsText)
+        .ignoresSafeArea()
         .navigationTitle(section.title)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    collapseAppToMenuBar()
-                } label: {
-                    Label("Hide to Menu Bar", systemImage: "menubar.arrow.up.rectangle")
-                }
-                .help("Close the window. Monitoring keeps running from the menu bar.")
+        .frame(minWidth: 880, minHeight: 640)
+    }
+}
+
+/// Custom sidebar: three rows, the live status, and a way back to the menu bar.
+private struct Sidebar: View {
+    @Binding var section: MainSection
+    let isRunning: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("NailBite")
+                    .font(.system(size: 17, weight: .semibold))
+                LiveStatus(isOn: isRunning)
             }
+            .padding(.horizontal, DS.Space.m)
+            .padding(.top, 52) // clears the window controls
+            .padding(.bottom, DS.Space.xl)
+
+            VStack(spacing: 2) {
+                ForEach(MainSection.allCases) { item in
+                    Button { section = item } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: item.symbol)
+                                .frame(width: 18)
+                                .foregroundStyle(section == item ? Color.dsText : Color.dsTextTertiary)
+                            Text(item.title)
+                            Spacer()
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(section == item ? Color.dsText : Color.dsTextSecondary)
+                        .padding(.horizontal, DS.Space.m)
+                        .frame(height: 32)
+                        .background(section == item ? Color.dsSurfaceRaised : .clear,
+                                    in: .rect(cornerRadius: DS.Radius.control, style: .continuous))
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(item.shortcut, modifiers: .command)
+                    .accessibilityAddTraits(section == item ? .isSelected : [])
+                }
+            }
+
+            Spacer()
+
+            Button(action: collapseAppToMenuBar) {
+                HStack(spacing: 10) {
+                    Image(systemName: "menubar.arrow.up.rectangle").frame(width: 18)
+                    Text("Hide to Menu Bar")
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(Color.dsTextSecondary)
+                .padding(.horizontal, DS.Space.m)
+                .frame(height: 32)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .help("Close the window. NailBite keeps watching from the menu bar.")
+            .padding(.bottom, DS.Space.m)
         }
-        .frame(minWidth: 820, minHeight: 600)
+        .padding(.horizontal, DS.Space.s)
+        .frame(width: 208)
+    }
+}
+
+/// Page header used by Today, Insights and Settings: a quiet line of context over the title.
+struct PageHeader<Trailing: View>: View {
+    let context: String
+    let title: String
+    @ViewBuilder var trailing: Trailing
+
+    var body: some View {
+        HStack(alignment: .lastTextBaseline) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(context)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextSecondary)
+                Text(title)
+                    .font(.dsPageTitle)
+            }
+            Spacer()
+            trailing
+        }
     }
 }
 
@@ -85,31 +162,33 @@ struct TodayView: View {
         let streak = Insights.biteFreeStreak(episodes: episodes, activeDays: tracker.activeDays)
 
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: DS.Space.xl) {
+                PageHeader(context: Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)), title: "Today") {
+                    EmptyView()
+                }
+
                 hero(lastBite: tracker.records.last?.date, lastApp: episodes.last?.app)
 
-                HStack(spacing: 14) {
-                    StatTile(title: "Today", value: "\(today.count)",
-                             detail: compare(today.count, yesterday.count, "yesterday"),
-                             symbol: "hand.raised", tint: .dsBiteText)
+                HStack(spacing: DS.Space.m) {
+                    StatTile(title: "Episodes today", value: "\(today.count)",
+                             detail: compare(today.count, yesterday.count, "yesterday"), marked: today.count > 0)
                     StatTile(title: "Last 7 days", value: "\(week.count)",
-                             detail: compare(week.count, lastWeek.count, "the week before"),
-                             symbol: "calendar", tint: .dsTextSecondary)
-                    StatTile(title: "Bite-free streak", value: streak == 1 ? "1 day" : "\(streak) days",
-                             detail: "Days you used your Mac", symbol: "flame", tint: .dsWin)
+                             detail: compare(week.count, lastWeek.count, "the 7 days before"))
+                    StatTile(title: "Bite-free streak", value: "\(streak)",
+                             detail: "Days in a row without an episode")
                 }
 
                 Panel(title: "Today by hour") {
                     if today.isEmpty {
-                        EmptyNote(symbol: "sparkles", text: "No episodes today. Keep it going.")
+                        EmptyNote(text: "No episodes today")
                     } else {
                         HourChart(episodes: today)
-                            .frame(height: 140)
+                            .frame(height: 160)
                     }
                 }
 
-                HStack(alignment: .top, spacing: 14) {
-                    Panel(title: "Top triggers this week") {
+                HStack(alignment: .top, spacing: DS.Space.m) {
+                    Panel(title: "Top triggers", meta: "7 days") {
                         TriggerList(apps: Array(Insights.triggerApps(week).prefix(4)))
                     }
                     Panel(title: "Recent episodes") {
@@ -117,51 +196,39 @@ struct TodayView: View {
                     }
                 }
             }
-            .padding(28)
-            .frame(maxWidth: 900)
+            .padding(.horizontal, DS.Space.xxl)
+            .padding(.top, 44)
+            .padding(.bottom, DS.Space.xxl)
+            .frame(maxWidth: 980)
             .frame(maxWidth: .infinity)
         }
     }
 
     private func hero(lastBite: Date?, lastApp: String?) -> some View {
-        HStack(alignment: .center, spacing: 20) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(lastBite == nil ? "No bites recorded yet" : "Bite-free for")
-                    .font(.title3)
+        HStack(alignment: .bottom, spacing: DS.Space.xl) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(lastBite == nil ? "Nothing recorded yet" : "Bite-free for")
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Color.dsTextSecondary)
+                BiteFreeClock(since: lastBite, size: 120)
+                    .padding(.top, -4)
                 if let lastBite {
-                    TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                        let text = ctx.date.timeIntervalSince(lastBite).shortDuration
-                        Text(text)
-                            .font(.dsNumber(56, weight: .bold))
-                            .foregroundStyle(Color.dsWin)
-                            .contentTransition(.numericText())
-                            .animation(DS.Motion.counter, value: text)
-                    }
-                    Text("Last episode \(Self.when(lastBite))\(lastApp.map { " in \($0)" } ?? "")")
-                        .font(.callout)
+                    Text("Last episode \(Self.when(lastBite))\(lastApp.map { ", in \($0)" } ?? "")")
+                        .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 10) {
-                Label(monitor.isRunning ? "Monitoring" : "Paused",
-                      systemImage: monitor.isRunning ? "circle.fill" : "pause.circle")
-                    .symbolEffect(.pulse, options: .repeating, isActive: monitor.isRunning)
-                    .imageScale(.small)
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(monitor.isRunning ? Color.dsWin : Color.dsTextSecondary)
-                Button {
-                    withAnimation(.snappy) { monitor.isRunning.toggle() }
-                } label: {
-                    Label(monitor.isRunning ? "Pause" : "Start Monitoring",
-                          systemImage: monitor.isRunning ? "pause.fill" : "play.fill")
-                }
-                .controlSize(.large)
-                    .glassButton(prominent: true)
+            Button {
+                withAnimation(DS.Motion.snappy) { monitor.isRunning.toggle() }
+            } label: {
+                Label(monitor.isRunning ? "Pause" : "Start Watching",
+                      systemImage: monitor.isRunning ? "pause.fill" : "play.fill")
+                    .contentTransition(.symbolEffect(.replace))
             }
+            .buttonStyle(InkButtonStyle(large: true))
         }
-        .padding(24)
+        .padding(DS.Space.xl + 4)
         .card(cornerRadius: DS.Radius.sheet)
     }
 
@@ -182,61 +249,77 @@ struct TodayView: View {
 
 // MARK: - Shared pieces (also used by Insights)
 
+/// A label, a big figure, a comparison. Numbers only.
 struct StatTile: View {
     let title: String
     let value: String
     let detail: String
-    let symbol: String
-    let tint: Color
+    var marked = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label(title, systemImage: symbol)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(tint)
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(.dsCaption.weight(.medium))
+                .foregroundStyle(Color.dsTextSecondary)
                 .lineLimit(1)
             Text(value)
-                .font(.dsNumber(28, weight: .bold))
-                .foregroundStyle(Color.dsText)
+                .font(.dsFigure(52))
+                .foregroundStyle(marked ? Color.dsSignalText : Color.dsText)
                 .contentTransition(.numericText())
                 .animation(DS.Motion.counter, value: value)
             Text(detail)
-                .font(.caption)
-                .foregroundStyle(Color.dsTextSecondary)
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsTextTertiary)
                 .lineLimit(2, reservesSpace: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18)
+        .padding(DS.Space.l + 4)
         .card()
+        .signalEdge(marked, inset: DS.Space.l + 4)
         .accessibilityElement(children: .combine)
     }
 }
 
 struct Panel<Content: View>: View {
     let title: String
+    var meta: String? = nil
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text(title)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: DS.Space.l) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(title)
+                    .font(.dsHeadline)
+                Spacer()
+                if let meta {
+                    Text(meta)
+                        .font(.dsMeta)
+                        .foregroundStyle(Color.dsTextTertiary)
+                }
+            }
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
+        .padding(DS.Space.l + 4)
         .card()
     }
 }
 
 struct EmptyNote: View {
-    let symbol: String
     let text: String
 
     var body: some View {
-        Label(text, systemImage: symbol)
-            .font(.callout)
+        Text(text)
+            .font(.dsBody)
             .foregroundStyle(Color.dsTextSecondary)
-            .frame(maxWidth: .infinity, minHeight: 60)
+            .frame(maxWidth: .infinity, minHeight: 64)
+    }
+}
+
+/// Shared chart axis styling: mono labels, hairline grid.
+extension View {
+    func dsAxisLabels() -> some View {
+        font(.dsMeta).foregroundStyle(Color.dsTextTertiary)
     }
 }
 
@@ -246,20 +329,36 @@ struct HourChart: View {
     var body: some View {
         let counts = Dictionary(grouping: episodes) { Calendar.current.component(.hour, from: $0.start) }
             .mapValues(\.count)
-        Chart(0..<24, id: \.self) { hour in
-            BarMark(x: .value("Hour", hour), y: .value("Episodes", counts[hour] ?? 0))
-                .foregroundStyle(Color.dsBite)
-                .cornerRadius(4)
+        let now = Calendar.current.component(.hour, from: .now)
+        Chart {
+            ForEach(counts.sorted { $0.key < $1.key }, id: \.key) { (hour: Int, count: Int) in
+                let x = Double(hour)
+                RectangleMark(xStart: .value("Hour", x - 0.36), xEnd: .value("Hour", x + 0.36),
+                        yStart: .value("Episodes", 0), yEnd: .value("Episodes", count))
+                    .foregroundStyle(Color.dsSignal)
+                    .cornerRadius(3)
+            }
+            RuleMark(x: .value("Now", Double(now) + 0.5))
+                .foregroundStyle(Color.dsTextTertiary)
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                .annotation(position: .top, alignment: .center, spacing: 2) {
+                    Text("now").dsAxisLabels()
+                }
         }
-        .chartXScale(domain: 0...23)
+        .chartXScale(domain: -0.5...23.5)
         .chartXAxis {
             AxisMarks(values: [0, 6, 12, 18, 23]) { value in
                 AxisValueLabel {
-                    if let h = value.as(Int.self) { Text(hourLabel(h)) }
+                    if let h = value.as(Int.self) { Text(hourLabel(h)).dsAxisLabels() }
                 }
             }
         }
-        .chartYAxis { AxisMarks(values: .automatic(desiredCount: 3)) }
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { _ in
+                AxisGridLine().foregroundStyle(Color.dsBorder)
+                AxisValueLabel().font(.dsMeta).foregroundStyle(Color.dsTextTertiary)
+            }
+        }
     }
 
     private func hourLabel(_ h: Int) -> String {
@@ -268,35 +367,41 @@ struct HourChart: View {
     }
 }
 
+/// Ranked apps with a thin share bar. The top one carries the signal, the rest stay neutral.
 struct TriggerList: View {
     let apps: [(name: String, bundleID: String?, count: Int)]
 
     var body: some View {
         if apps.isEmpty {
-            EmptyNote(symbol: "app.dashed", text: "No trigger apps recorded yet")
+            EmptyNote(text: "No trigger apps recorded yet")
         } else {
             let top = apps.first?.count ?? 1
-            VStack(spacing: 10) {
-                ForEach(apps, id: \.name) { app in
-                    HStack(spacing: 10) {
-                        AppIcon(bundleID: app.bundleID)
-                        Text(app.name)
-                            .lineLimit(1)
-                        Spacer()
-                        Text("\(app.count)")
-                            .monospacedDigit()
-                            .foregroundStyle(Color.dsTextSecondary)
-                    }
-                    .overlay(alignment: .bottomLeading) {
+            let total = max(1, apps.map(\.count).reduce(0, +))
+            VStack(spacing: DS.Space.m) {
+                ForEach(Array(apps.enumerated()), id: \.element.name) { index, app in
+                    VStack(spacing: 6) {
+                        HStack(spacing: 10) {
+                            AppIcon(bundleID: app.bundleID)
+                            Text(app.name)
+                                .font(.dsBody)
+                                .lineLimit(1)
+                            Spacer()
+                            Text("\(app.count)")
+                                .font(.dsMeta)
+                                .foregroundStyle(Color.dsTextSecondary)
+                        }
                         GeometryReader { geo in
-                            Capsule()
-                                .fill(Color.dsBite.opacity(0.7))
-                                .frame(width: geo.size.width * CGFloat(app.count) / CGFloat(top), height: 3)
-                                .offset(y: 6)
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Color.dsSurfaceRaised)
+                                Capsule()
+                                    .fill(index == 0 ? Color.dsSignal : Color.dsTextTertiary.opacity(0.6))
+                                    .frame(width: geo.size.width * CGFloat(app.count) / CGFloat(top))
+                            }
                         }
                         .frame(height: 3)
                     }
-                    .padding(.bottom, 4)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(app.name), \(app.count) episodes, \(app.count * 100 / total) percent")
                 }
             }
         }
@@ -308,27 +413,39 @@ struct RecentList: View {
 
     var body: some View {
         if episodes.isEmpty {
-            EmptyNote(symbol: "checkmark.circle", text: "No episodes recorded")
+            EmptyNote(text: "No episodes recorded")
         } else {
-            VStack(spacing: 10) {
+            VStack(spacing: 0) {
                 ForEach(episodes) { e in
                     HStack(spacing: 10) {
+                        Text(Self.stamp(e.start))
+                            .font(.dsMeta)
+                            .foregroundStyle(Color.dsTextTertiary)
+                            .frame(width: 64, alignment: .leading)
                         AppIcon(bundleID: e.bundleID)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(e.app ?? "Episode")
-                                .lineLimit(1)
-                            Text(e.start.formatted(.relative(presentation: .named)))
-                                .font(.caption)
-                                .foregroundStyle(Color.dsTextSecondary)
-                        }
+                        Text(e.app ?? "Unknown app")
+                            .font(.dsBody)
+                            .lineLimit(1)
                         Spacer()
                         Text(e.duration.shortDuration)
-                            .font(.callout.monospacedDigit())
+                            .font(.dsMeta)
                             .foregroundStyle(Color.dsTextSecondary)
                     }
+                    .frame(height: 32)
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
+    }
+
+    /// "14:05" today, "Tue 21:38" this week, "24 Nov" before.
+    private static func stamp(_ date: Date) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(date) { return date.formatted(date: .omitted, time: .shortened) }
+        if date > Date.now.addingTimeInterval(-6 * 86_400) {
+            return date.formatted(.dateTime.weekday(.abbreviated).hour().minute())
+        }
+        return date.formatted(.dateTime.day().month(.abbreviated))
     }
 }
 
@@ -341,12 +458,14 @@ struct AppIcon: View {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                     .resizable()
             } else {
-                Image(systemName: "hand.raised.circle")
+                Image(systemName: "app.dashed")
                     .resizable()
-                    .foregroundStyle(Color.dsTextSecondary)
+                    .fontWeight(.light)
+                    .foregroundStyle(Color.dsTextTertiary)
+                    .padding(2)
             }
         }
-        .frame(width: 22, height: 22)
+        .frame(width: 20, height: 20)
         .accessibilityHidden(true)
     }
 }

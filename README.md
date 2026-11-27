@@ -4,7 +4,7 @@
 
 <h1 align="center">NailBiteMenu</h1>
 
-[![](https://img.shields.io/github/downloads/killian31/NailBiteMenu/total?style=for-the-badge&logo=apple&color=violet)](https://github.com/killian31/NailBiteMenu/releases/latest)
+[![](https://img.shields.io/github/downloads/killian31/NailBiteMenu/total?style=for-the-badge&logo=apple&color=c8341c)](https://github.com/killian31/NailBiteMenu/releases/latest)
 
 <p align="center">
   A <b>menu bar app</b> that uses your Mac’s camera to detect nail-biting in real time, locally and privately.
@@ -19,7 +19,7 @@
 - [Open Source](#open-source)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Threshold](#threshold)
+  - [Sensitivity](#sensitivity)
 - [Alerts](#alerts)
 - [Privacy](#privacy)
 - [Requirements](#requirements)
@@ -51,34 +51,34 @@ You can explore, build, or contribute to it right here:
 
 NailBite runs from your **menu bar**. The main window has three sections:
 
-- **Today**: how long you've been bite-free, today's and this week's episodes, your bite-free streak, and the apps where biting happened.
-- **Insights**: episodes per day, a weekday × hour heatmap, average episode length, bite-free days, and top trigger apps over 7 days, 30 days, 90 days, or all time.
-- **Settings**: theme (System, Light, Dark), threshold, alerts, and data reset.
+- **Today**: how long you've been bite-free, today's and the last 7 days' episodes, your bite-free streak, today by hour, the apps where biting happened, and recent episodes.
+- **Insights**: the episode count and its change against the period before, episodes per day with a 7-day average, a weekday × hour heatmap, average episode length, bite-free days, and top trigger apps over 7 days, 30 days, 90 days, or all time.
+- **Settings**: alerts, sensitivity, theme (System, Light, Dark), and data reset.
 
-Close the window and monitoring keeps running. The menu bar panel shows the bite-free timer, today's count, and your streak, with buttons to pause or open the app.
+Close the window and monitoring keeps running. The menu bar panel shows the bite-free timer, a live signal meter with your alert threshold, and your episode count for today, this week or this month next to the period before, with buttons to pause or open the app.
 
 Detections a few seconds apart are grouped into one **episode**. Streaks and bite-free days only count days the app was monitoring. Everything is stored locally.
 
-### Threshold
+### Sensitivity
 
-The threshold controls how sensitive detection is:
+**Settings › Detection** has a slider from Relaxed to Strict, 75 by default. It sets how sure the model must be before a frame counts as biting:
 
-| Threshold | Behavior |
+| Setting | Behavior |
 |-----------|----------|
-| **Low (≈45%)** | Very sensitive, may flag normal movements |
-| **Balanced (≈60%)** | Recommended everyday setting |
-| **High (≈75%+)** | Only triggers on strong evidence |
+| **Lower** | Catches bites a little earlier, with more false alerts from hand-to-mouth gestures |
+| **75 (default)** | Recommended everyday setting |
+| **Higher** | Fewer false alerts, but quick bites may be missed |
 
-Tune it based on lighting, distance to the camera, and how early you want alerts.
+Tune it based on lighting, distance to the camera, and how early you want alerts. The live signal meter in the menu bar panel shows the model's score next to your setting.
 
 ## Alerts
 
-Each biting episode triggers at most two alerts:
+When biting starts:
 
-1. **A banner** slides in under the menu bar and names the app you're in. It doesn't steal focus.
-2. **A 30-second reset** takes over the screen if you keep biting. It guides you to rest your hands and breathe in and out for four seconds each. This is the competing-response step of habit reversal training. You can turn it off in Settings.
+1. **The screen edges light up.** Red light comes in from the edges of every screen within a fraction of a second, with a short ping and a "Hands down" label naming the app you're in. It stays on while you keep biting and fades about a second after your hands come down. It never takes focus.
+2. **A 30-second reset**, once per episode, if you keep biting. The screen dims and a countdown paces your breathing, four seconds in and four out, while the red fades. This is the competing-response step of habit reversal training.
 
-Both have a **Preview** button in Settings.
+The glow, the label, the sound and the reset can each be turned off in Settings, and **Preview Alert** and **Preview Reset** let you try them.
 
 ## Privacy
 

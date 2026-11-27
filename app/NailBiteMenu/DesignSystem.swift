@@ -1,43 +1,38 @@
 import SwiftUI
 import AppKit
 
-// NailBite design system.
+// NailBite design system, proposal C ("Signal").
 //
-// Three color roles, never mixed:
-//   accent (Slate Indigo) = things you can do: buttons, selection, links
-//   bite   (Pumpkin Spice) = nail-biting happened: banner, reset, episode counts, charts
-//   win    (Frozen Water)  = progress: bite-free time, streaks, bite-free days
-// Everything else is a neutral from the palette (Shadow Grey, Charcoal, Glaucous).
-// Text pairs below meet WCAG AA (4.5:1) on their surfaces in both modes; `textTertiary` is
-// for captions and icons only (≥3.8:1).
+// Monochrome ink on paper, plus one color that means one thing:
+//   signal (vermilion) = nail-biting happened: the alert, episode counts, the bite charts.
+//   ink               = everything you can do and every number that is good news.
+//   live (green)      = the camera is on. Same green as the camera light next to the lens.
+// Text pairs meet WCAG AA (4.5:1) on their surfaces in both modes, `dsTextTertiary` included.
 
 extension Color {
     // Surfaces
-    static let dsBackground = Color(light: 0xF4F7F6, dark: 0x221C20)
-    static let dsSurface = Color(light: 0xFFFFFF, dark: 0x32292F)
-    static let dsSurfaceMuted = Color(light: 0xEDF1EF, dark: 0x3D343B)
-    static let dsBorder = Color(light: 0xE1E6E4, dark: 0x42383F)
+    static let dsBackground = Color(light: 0xF4F4F1, dark: 0x0F0F10)
+    static let dsSurface = Color(light: 0xFFFFFF, dark: 0x18181A)
+    static let dsSurfaceRaised = Color(light: 0xEDEDEA, dark: 0x232326)
+    /// Hairlines: the text color at low opacity, so they sit on any surface.
+    static let dsBorder = Color(light: 0x151517, dark: 0xF2F2F0).opacity(0.09)
 
     // Text
-    static let dsText = Color(light: 0x32292F, dark: 0xF1EEF3)
-    static let dsTextSecondary = Color(light: 0x575366, dark: 0xA9A3B8)
-    static let dsTextTertiary = Color(light: 0x6E7DAB, dark: 0x8C8399)
+    static let dsText = Color(light: 0x151517, dark: 0xF2F2F0)
+    static let dsTextSecondary = Color(light: 0x4A4A4F, dark: 0xA1A1A6)
+    static let dsTextTertiary = Color(light: 0x6B6B6B, dark: 0x8E8E93)
+    /// Text on an ink fill.
+    static let dsOnInk = Color(light: 0xFFFFFF, dark: 0x111112)
 
-    // Roles
-    /// Indigo for text, links and icons (lifted in dark so it reads on dark surfaces).
-    static let dsAccent = Color(light: 0x5762D5, dark: 0x8C95EC)
-    /// Indigo for filled controls (buttons, selection). Same as the AccentColor asset,
-    /// darker than `dsAccent` in dark mode so white labels on it stay readable (4.6:1).
-    static let dsAccentFill = Color(light: 0x5762D5, dark: 0x5F6AD9)
-    static let dsOnAccent = Color.white
-    /// Bright pumpkin for fills, rings and bars. Never put white text on it.
-    static let dsBite = Color(light: 0xFF8C42, dark: 0xFF8C42)
-    /// Pumpkin that is readable as text or a small icon on light surfaces.
-    static let dsBiteText = Color(light: 0xA84F12, dark: 0xFF8C42)
-    static let dsBiteTint = Color(light: 0xFFE6D4, dark: 0x4A2A18)
-    static let dsWin = Color(light: 0x2A6E5A, dark: 0xD1E3DD)
-    static let dsWinTint = Color(light: 0xD1E3DD, dark: 0x2C3B37)
-    static let dsChartNeutral = Color(light: 0x6E7DAB, dark: 0x8C8399)
+    // Signal
+    /// Vermilion for bars, cells, glows. Never text on light surfaces.
+    static let dsSignal = Color(light: 0xE5432A, dark: 0xFF5A3D)
+    /// Vermilion that reads as text or as a fill under white text (5.3:1).
+    static let dsSignalText = Color(light: 0xC8341C, dark: 0xFF5A3D)
+    static let dsSignalTint = Color(light: 0xFBE5E0, dark: 0x3A1A14)
+
+    /// Camera-on dot only.
+    static let dsLive = Color(light: 0x1E9E4A, dark: 0x30D158)
 
     init(light: UInt32, dark: UInt32) {
         self.init(nsColor: NSColor(name: nil) { appearance in
@@ -47,13 +42,16 @@ extension Color {
     }
 }
 
-private extension NSColor {
+extension NSColor {
     convenience init(hex: UInt32) {
         self.init(srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
                   green: CGFloat((hex >> 8) & 0xFF) / 255,
                   blue: CGFloat(hex & 0xFF) / 255,
                   alpha: 1)
     }
+
+    /// The alert glow. Display P3, a touch richer than sRGB can show, on the displays that have it.
+    static let signalGlow = NSColor(displayP3Red: 0.95, green: 0.25, blue: 0.14, alpha: 1)
 }
 
 enum DS {
@@ -67,31 +65,122 @@ enum DS {
     }
 
     enum Radius {
-        static let control: CGFloat = 10
-        static let tile: CGFloat = 16
-        static let card: CGFloat = 20
-        static let sheet: CGFloat = 28
+        static let control: CGFloat = 8
+        static let tile: CGFloat = 12
+        static let card: CGFloat = 16
+        static let sheet: CGFloat = 20
     }
 
     enum Motion {
         /// State changes: toggles, selection, appearing content.
-        static let snappy = Animation.snappy(duration: 0.3)
-        /// Larger layout moves and charts.
-        static let smooth = Animation.smooth(duration: 0.45)
+        static let snappy = Animation.snappy(duration: 0.24)
+        /// Charts and range changes.
+        static let smooth = Animation.smooth(duration: 0.4)
         /// Numbers ticking over.
-        static let counter = Animation.spring(response: 0.45, dampingFraction: 0.9)
+        static let counter = Animation.spring(response: 0.4, dampingFraction: 1)
     }
 }
 
 extension Font {
-    /// Big numbers (timers, counts): rounded and tabular so digits don't jiggle.
-    static func dsNumber(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
-        .system(size: size, weight: weight, design: .rounded).monospacedDigit()
+    /// The display face: SF Pro Compressed, tabular. Big figures only (timers, counts).
+    static func dsFigure(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+        .system(size: size, weight: weight).width(.compressed).monospacedDigit()
     }
-    static let dsTitle = Font.system(.title2, weight: .semibold)
-    static let dsHeadline = Font.system(.headline)
-    static let dsBody = Font.system(.body)
-    static let dsCaption = Font.system(.caption)
+    /// Meta, axis labels, counts in lists: SF Mono.
+    static let dsMeta = Font.system(size: 11, weight: .medium, design: .monospaced)
+    static let dsPageTitle = Font.system(size: 26, weight: .semibold)
+    static let dsHeadline = Font.system(size: 13, weight: .semibold)
+    static let dsBody = Font.system(size: 13)
+    static let dsCaption = Font.system(size: 12)
+}
+
+// MARK: - Buttons
+
+/// Ink fill, inverse label. The one primary action on a surface.
+struct InkButtonStyle: ButtonStyle {
+    var large = false
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: large ? 14 : 13, weight: .semibold))
+            .foregroundStyle(Color.dsOnInk)
+            .padding(.horizontal, large ? 20 : 14)
+            .frame(height: large ? 40 : 30)
+            .background(Color.dsText.opacity(configuration.isPressed ? 0.82 : 1),
+                        in: .rect(cornerRadius: DS.Radius.control, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(isEnabled ? 1 : 0.4)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .contentShape(.rect)
+    }
+}
+
+/// Raised surface with a hairline. Everything that isn't the primary action.
+struct QuietButtonStyle: ButtonStyle {
+    var large = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: large ? 14 : 13, weight: .medium))
+            .foregroundStyle(Color.dsText)
+            .padding(.horizontal, large ? 20 : 12)
+            .frame(height: large ? 40 : 30)
+            .background(Color.dsSurfaceRaised.opacity(configuration.isPressed ? 0.6 : 1),
+                        in: .rect(cornerRadius: DS.Radius.control, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: DS.Radius.control, style: .continuous)
+                .strokeBorder(Color.dsBorder))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .contentShape(.rect)
+    }
+}
+
+// MARK: - Signature pieces
+
+/// The camera-on dot. Green like the light by the lens; grey and hollow when paused.
+struct LiveDot: View {
+    let isOn: Bool
+
+    var body: some View {
+        Circle()
+            .fill(isOn ? Color.dsLive : Color.clear)
+            .strokeBorder(isOn ? Color.clear : Color.dsTextTertiary, lineWidth: 1.5)
+            .frame(width: 8, height: 8)
+            .accessibilityHidden(true)
+    }
+}
+
+/// "Watching" / "Paused" with the live dot.
+struct LiveStatus: View {
+    let isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 6) {
+            LiveDot(isOn: isOn)
+            Text(isOn ? "Watching" : "Paused")
+                .font(.dsCaption.weight(.medium))
+                .foregroundStyle(Color.dsTextSecondary)
+                .contentTransition(.opacity)
+        }
+        .animation(DS.Motion.snappy, value: isOn)
+    }
+}
+
+extension View {
+    /// The signature: a short vermilion bar on the leading edge of anything that counts bites.
+    /// It echoes the alert, which comes in from the edges of the screen.
+    func signalEdge(_ on: Bool = true, inset: CGFloat = DS.Space.l) -> some View {
+        overlay(alignment: .leading) {
+            if on {
+                Capsule()
+                    .fill(Color.dsSignal)
+                    .frame(width: 3)
+                    .padding(.vertical, inset)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
 }
 
 // MARK: - Appearance setting

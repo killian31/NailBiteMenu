@@ -1,6 +1,6 @@
 import SwiftUI
 
-// ponytail: native grouped Form, gets the system look (incl. Liquid Glass) on every macOS version for free.
+// ponytail: native grouped Form, so every control behaves like macOS. Only the page around it is ours.
 struct SettingsView: View {
     @ObservedObject var preferences: AppPreferences
     @ObservedObject var tracker: HabitTracker
@@ -12,98 +12,116 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Appearance") {
-                Picker("Theme", selection: $preferences.appearance) {
-                    ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            PageHeader(context: "NailBite \(version)", title: "Settings") { EmptyView() }
+                .padding(.horizontal, 46) // lines up with the Form's section headers
+                .padding(.top, 44)
 
-            Section("Monitoring") {
-                LabeledContent("Confidence threshold") {
-                    HStack {
-                        Slider(value: $preferences.confidenceThreshold, in: 1...99) {
-                            EmptyView()
-                        } minimumValueLabel: {
-                            Text("Relaxed").font(.caption2)
-                        } maximumValueLabel: {
-                            Text("Strict").font(.caption2)
+            Form {
+                Section {
+                    HStack(spacing: DS.Space.m) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Try the alert")
+                            Text("Shows the alert the way a real detection does, with sound")
+                                .font(.dsCaption)
+                                .foregroundStyle(Color.dsTextSecondary)
                         }
-                        Text("\(Int(preferences.confidenceThreshold))%")
-                            .monospacedDigit()
-                            .frame(width: 40, alignment: .trailing)
+                        Spacer()
+                        Button("Preview Alert") { Alerts.gentle(app: nil) }
+                            .buttonStyle(InkButtonStyle())
+                        Button("Preview Reset") { Alerts.interrupt() }
+                            .buttonStyle(QuietButtonStyle())
+                    }
+                    .padding(.vertical, 4)
+
+                    Toggle(isOn: $preferences.alertEdges) {
+                        Text("Edge glow")
+                        Text("The edges of every screen light up red")
+                    }
+                    Toggle(isOn: $preferences.alertLabel) {
+                        Text("“Hands down” label")
+                        Text("A small tag under the menu bar naming the app you were in")
+                    }
+                    Toggle(isOn: Binding(get: { !preferences.muteAlerts }, set: { preferences.muteAlerts = !$0 })) {
+                        Text("Sound")
+                        Text("A short ping with the glow")
+                    }
+                    Toggle(isOn: $preferences.interruptIfContinuing) {
+                        Text("Reset if biting continues")
+                        Text("If you keep going for a few seconds after the glow, a 30-second hands-down reset takes over the screen")
+                    }
+                } header: {
+                    Text("Alert")
+                }
+
+                Section("Detection") {
+                    LabeledContent {
+                        HStack(spacing: DS.Space.s) {
+                            Slider(value: $preferences.confidenceThreshold, in: 1...99) {
+                                EmptyView()
+                            } minimumValueLabel: {
+                                Text("Relaxed").font(.dsCaption)
+                            } maximumValueLabel: {
+                                Text("Strict").font(.dsCaption)
+                            }
+                            Text("\(Int(preferences.confidenceThreshold))")
+                                .font(.dsMeta)
+                                .frame(width: 24, alignment: .trailing)
+                        }
+                        .frame(width: 280)
+                    } label: {
+                        Text("Sensitivity")
+                        Text("Strict waits until the model is surer. Fewer false alarms, a few missed bites.")
+                    }
+
+                    Toggle(isOn: $preferences.startMonitoringOnLaunch) {
+                        Text("Start watching on launch")
                     }
                 }
 
-                Toggle(isOn: $preferences.startMonitoringOnLaunch) {
-                    Text("Start on launch")
-                    Text("Begin monitoring automatically when the app opens")
-                }
-            }
-
-            Section {
-                Toggle(isOn: $preferences.interruptIfContinuing) {
-                    Text("Full-screen reset if biting continues")
-                    Text("A banner appears first. If you keep biting for a few seconds, a 30-second hands-down exercise takes over the screen.")
-                }
-                Toggle(isOn: $preferences.muteAlerts) {
-                    Text("Mute alert sounds")
-                    Text("Banners and the reset screen still appear")
-                }
-                LabeledContent("Preview") {
-                    HStack {
-                        Button("Banner") { AlertPresenter.showBanner(app: nil) }
-                        Button("Reset Screen") { AlertPresenter.showInterrupt() }
+                Section("Appearance") {
+                    Picker("Theme", selection: $preferences.appearance) {
+                        ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
                     }
+                    .pickerStyle(.segmented)
                 }
-            } header: {
-                Text("Alerts")
-            }
 
-            Section {
-                LabeledContent("Version", value: version)
-                LabeledContent("Privacy", value: "On-device only")
-                LabeledContent("Model", value: "Core ML")
-                Toggle("Show performance stats in the menu", isOn: $monitor.showDebug)
-            } header: {
-                Text("About")
-            } footer: {
-                Text("NailBite uses on-device machine learning to help you track and reduce nail-biting habits. No data ever leaves your Mac.")
-            }
+                Section {
+                    LabeledContent("Privacy", value: "Frames never leave this Mac")
+                    LabeledContent("Model", value: "Core ML, on device")
+                    Toggle("Show performance stats in the menu", isOn: $monitor.showDebug)
+                } header: {
+                    Text("About")
+                }
 
-            Section {
-                LabeledContent {
-                    Button("Reset All Statistics…", role: .destructive) {
-                        showingResetAlert = true
+                Section {
+                    LabeledContent {
+                        Button("Delete History…", role: .destructive) {
+                            showingResetAlert = true
+                        }
+                    } label: {
+                        Text("History")
+                        Text("\(tracker.episodes.count) episodes from \(tracker.activeDays.count) days")
                     }
-                } label: {
-                    Text("Habit data")
-                    Text("Permanently deletes every recorded detection.")
+                } header: {
+                    Text("Data")
                 }
-            } header: {
-                Text("Data")
             }
+            .formStyle(.grouped)
+            .scrollContentBackground(.hidden)
+            .padding(.horizontal, DS.Space.l)
         }
-        .formStyle(.grouped)
-        .scrollContentBackground(.hidden)
+        .frame(maxWidth: 760, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .background(Color.dsBackground)
         .foregroundStyle(Color.dsText)
-        .alert("Reset all statistics?", isPresented: $showingResetAlert) {
-            Button("Reset Data", role: .destructive) {
+        .alert("Delete your whole history?", isPresented: $showingResetAlert) {
+            Button("Delete History", role: .destructive) {
                 tracker.clearAllData()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("All \(tracker.detections.count) saved detections will be permanently deleted. This cannot be undone.")
+            Text("All \(tracker.episodes.count) episodes from \(tracker.activeDays.count) days will be deleted. This can’t be undone.")
         }
     }
-}
-
-
-#Preview {
-    let prefs = AppPreferences()
-    let tracker = HabitTracker()
-    SettingsView(preferences: prefs, tracker: tracker,
-                 monitor: MonitorViewModel(preferences: prefs, tracker: tracker))
 }
