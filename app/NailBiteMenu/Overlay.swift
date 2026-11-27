@@ -1,291 +1,272 @@
 import AppKit
-import QuartzCore
+import SwiftUI
+import Combine
 
-final class Overlay {
-    private static var window: NSWindow?
-    private static weak var countdownLabel: NSTextField?
-    private static var autoDismissTask: DispatchWorkItem?
-    private static var countdownTimer: Timer?
-    private static var keyMonitor: Any?
-    private static let autoDismissInterval: TimeInterval = 3
+/// Shows the two alert levels. Neither one activates the app, so the user's current app keeps focus
+/// and no Space switch happens.
+@MainActor
+enum AlertPresenter {
+    private static var banner: NSPanel?
+    private static var bannerDismiss: DispatchWorkItem?
+    private static var interrupt: NSPanel?
 
-    static func show(message: String) {
-        DispatchQueue.main.async {
-            guard let screen = NSScreen.main else { return }
+    // MARK: Level 1 – banner under the menu bar
 
-            dismiss()
+    static func showBanner(app: String?) {
+        guard interrupt == nil, let screen = NSScreen.main else { return }
+        dismissBanner(animated: false)
 
-            let window = NSWindow(
-                contentRect: screen.frame,
-                styleMask: [.borderless],
-                backing: .buffered,
-                defer: false
-            )
-            window.isOpaque = false
-            window.backgroundColor = NSColor.black.withAlphaComponent(0.55)
-            window.level = .screenSaver
-            window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-            window.ignoresMouseEvents = false
+        let host = NSHostingView(rootView: BannerView(app: app, onTap: { dismissBanner() }))
+        let size = host.fittingSize
+        let visible = screen.visibleFrame
+        let origin = NSPoint(x: visible.midX - size.width / 2, y: visible.maxY - size.height - 10)
 
-            let container = NSView(frame: screen.frame)
-            container.wantsLayer = true
-            container.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
-
-            let card = NSVisualEffectView()
-            card.translatesAutoresizingMaskIntoConstraints = false
-            card.material = .hudWindow
-            card.blendingMode = .withinWindow
-            card.state = .active
-            card.wantsLayer = true
-            card.layer?.cornerRadius = 32
-            card.layer?.borderColor = NSColor.white.withAlphaComponent(0.06).cgColor
-            card.layer?.borderWidth = 1
-            card.layer?.shadowColor = NSColor.black.withAlphaComponent(0.35).cgColor
-            card.layer?.shadowOpacity = 1
-            card.layer?.shadowRadius = 22
-            card.layer?.shadowOffset = CGSize(width: 0, height: 18)
-
-            let stack = NSStackView()
-            stack.orientation = .vertical
-            stack.alignment = .centerX
-            stack.spacing = 18
-            stack.translatesAutoresizingMaskIntoConstraints = false
-
-            let (titleText, detailText) = split(message: message)
-
-            let iconContainer = NSView()
-            iconContainer.wantsLayer = true
-            iconContainer.translatesAutoresizingMaskIntoConstraints = false
-            iconContainer.layer?.cornerRadius = 22
-            iconContainer.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.25).cgColor
-            iconContainer.layer?.borderColor = NSColor.white.withAlphaComponent(0.2).cgColor
-            iconContainer.layer?.borderWidth = 1
-            let iconImage = NSImageView(image: NSImage(systemSymbolName: "hand.raised.fill", accessibilityDescription: nil) ?? NSImage())
-            iconImage.contentTintColor = .white
-            iconImage.translatesAutoresizingMaskIntoConstraints = false
-            iconImage.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 24, weight: .semibold)
-            iconContainer.addSubview(iconImage)
-
-            NSLayoutConstraint.activate([
-                iconContainer.widthAnchor.constraint(equalToConstant: 64),
-                iconContainer.heightAnchor.constraint(equalToConstant: 64),
-                iconImage.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
-                iconImage.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor)
-            ])
-
-            let titleLabel = NSTextField(labelWithString: titleText)
-            titleLabel.font = .systemFont(ofSize: 32, weight: .bold)
-            titleLabel.textColor = .white
-            titleLabel.alignment = .center
-            titleLabel.lineBreakMode = .byWordWrapping
-            titleLabel.maximumNumberOfLines = 2
-
-            let detailLabel = NSTextField(labelWithString: detailText)
-            detailLabel.font = .systemFont(ofSize: 18, weight: .medium)
-            detailLabel.textColor = NSColor.white.withAlphaComponent(0.85)
-            detailLabel.alignment = .center
-            detailLabel.lineBreakMode = .byWordWrapping
-            detailLabel.maximumNumberOfLines = 2
-
-            let countdownLabel = NSTextField(labelWithString: "Dismisses in 3s")
-            countdownLabel.font = .systemFont(ofSize: 13, weight: .regular)
-            countdownLabel.textColor = NSColor.white.withAlphaComponent(0.75)
-            countdownLabel.alignment = .center
-
-            let button = OverlayButton(title: "Stay mindful", target: self, action: #selector(dismiss))
-            button.translatesAutoresizingMaskIntoConstraints = false
-            button.keyEquivalent = "\r"
-            button.heightAnchor.constraint(equalToConstant: 44).isActive = true
-
-            stack.addArrangedSubview(iconContainer)
-            stack.addArrangedSubview(titleLabel)
-            if !detailText.isEmpty {
-                stack.addArrangedSubview(detailLabel)
-            }
-            stack.addArrangedSubview(countdownLabel)
-            stack.addArrangedSubview(button)
-
-            card.addSubview(stack)
-            container.addSubview(card)
-
-            NSLayoutConstraint.activate([
-                card.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-                card.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-                card.widthAnchor.constraint(lessThanOrEqualToConstant: 440),
-                card.widthAnchor.constraint(greaterThanOrEqualToConstant: 300),
-
-                stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 24),
-                stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -24),
-                stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 28),
-                stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -28)
-            ])
-
-            window.contentView = container
-            NSApp.activate(ignoringOtherApps: true)
-            window.orderFrontRegardless()
-
-            self.window = window
-            self.countdownLabel = countdownLabel
-            self.keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                if event.keyCode == 36 {
-                    dismiss()
-                    return nil
-                }
-                return event
-            }
-            scheduleAutoDismiss()
+        let panel = makePanel(frame: NSRect(origin: origin, size: size), level: .statusBar)
+        panel.contentView = host
+        panel.alphaValue = 0
+        panel.setFrameOrigin(NSPoint(x: origin.x, y: origin.y + 12))
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.28
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().alphaValue = 1
+            panel.animator().setFrameOrigin(origin)
         }
+        banner = panel
+
+        let work = DispatchWorkItem { dismissBanner() }
+        bannerDismiss = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: work)
     }
 
-    @objc static func dismiss() {
-        if Thread.isMainThread {
-            performDismiss()
-        } else {
-            DispatchQueue.main.async {
-                performDismiss()
-            }
-        }
+    static func dismissBanner(animated: Bool = true) {
+        bannerDismiss?.cancel()
+        bannerDismiss = nil
+        guard let panel = banner else { return }
+        banner = nil
+        guard animated else { panel.orderOut(nil); return }
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.2
+            panel.animator().alphaValue = 0
+        }, completionHandler: { panel.orderOut(nil) })
     }
 
-    private static func scheduleAutoDismiss() {
-        autoDismissTask?.cancel()
-        countdownTimer?.invalidate()
+    // MARK: Level 2 – full-screen interrupt with the hands-down reset
 
-        var remaining = Int(autoDismissInterval)
-        updateCountdownLabel(with: remaining)
+    static func showInterrupt() {
+        guard interrupt == nil, let screen = NSScreen.main else { return }
+        dismissBanner(animated: false)
 
-        let task = DispatchWorkItem {
-            dismiss()
+        let panel = KeyPanel(contentRect: screen.frame,
+                             styleMask: [.borderless, .nonactivatingPanel],
+                             backing: .buffered, defer: false)
+        configure(panel, level: .screenSaver)
+        panel.contentView = NSHostingView(rootView: InterruptView(onClose: { dismissInterrupt() }))
+        panel.alphaValue = 0
+        panel.orderFrontRegardless()
+        panel.makeKey()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.25
+            panel.animator().alphaValue = 1
         }
-        autoDismissTask = task
-        DispatchQueue.main.asyncAfter(deadline: .now() + autoDismissInterval, execute: task)
-
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
-            remaining -= 1
-            if remaining > 0 {
-                updateCountdownLabel(with: remaining)
-            } else {
-                timer.invalidate()
-            }
-        }
-        if let timer = countdownTimer {
-            RunLoop.main.add(timer, forMode: .common)
-        }
+        interrupt = panel
     }
 
-    private static func updateCountdownLabel(with seconds: Int) {
-        countdownLabel?.stringValue = "Dismisses in \(seconds)s"
+    static func dismissInterrupt() {
+        guard let panel = interrupt else { return }
+        interrupt = nil
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.2
+            panel.animator().alphaValue = 0
+        }, completionHandler: { panel.orderOut(nil) })
     }
 
-    private static func split(message: String) -> (String, String) {
-        let parts = message.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
-        let title = parts.first.map(String.init) ?? message
-        let detail = parts.count > 1 ? String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines) : ""
-        return (title, detail)
+    // MARK: Helpers
+
+    private static func makePanel(frame: NSRect, level: NSWindow.Level) -> NSPanel {
+        let panel = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+        configure(panel, level: level)
+        return panel
     }
 
-    private static func performDismiss() {
-        autoDismissTask?.cancel()
-        autoDismissTask = nil
-        countdownTimer?.invalidate()
-        countdownTimer = nil
-        countdownLabel = nil
-
-        window?.orderOut(nil)
-        window = nil
-        if let monitor = keyMonitor {
-            NSEvent.removeMonitor(monitor)
-            keyMonitor = nil
-        }
+    private static func configure(_ panel: NSPanel, level: NSWindow.Level) {
+        panel.level = level
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.isReleasedWhenClosed = false
+        panel.hidesOnDeactivate = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
     }
 }
 
-private final class OverlayButton: NSButton {
-    private let gradientLayer = CAGradientLayer()
-    private let highlightLayer = CALayer()
+/// Borderless panels refuse key status by default; the interrupt needs it for Return / Esc.
+private final class KeyPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+}
 
-    override var wantsUpdateLayer: Bool { true }
+// MARK: - Views
 
-    init(title: String, target: AnyObject?, action: Selector) {
-        super.init(frame: .zero)
-        self.title = ""
-        self.target = target
-        self.action = action
-        self.isBordered = false
-        focusRingType = .none
-        let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: NSColor.white,
-            .font: NSFont.systemFont(ofSize: 17, weight: .semibold),
-            .kern: 0.4
-        ]
-        attributedTitle = NSAttributedString(string: title.uppercased(), attributes: attributes)
-        font = .systemFont(ofSize: 17, weight: .semibold)
-        contentTintColor = .white
-        alignment = .center
-        wantsLayer = true
-        let baseLayer = CALayer()
-        baseLayer.masksToBounds = false
-        baseLayer.cornerRadius = 18
-        baseLayer.shadowColor = NSColor.black.withAlphaComponent(0.35).cgColor
-        baseLayer.shadowOpacity = 1
-        baseLayer.shadowRadius = 12
-        baseLayer.shadowOffset = CGSize(width: 0, height: 6)
-        layer = baseLayer
-        setupGradient()
-        setContentHuggingPriority(.required, for: .horizontal)
-        setContentHuggingPriority(.required, for: .vertical)
-    }
+private struct BannerView: View {
+    let app: String?
+    let onTap: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        wantsLayer = true
-        let baseLayer = CALayer()
-        baseLayer.masksToBounds = false
-        baseLayer.cornerRadius = 18
-        baseLayer.shadowColor = NSColor.black.withAlphaComponent(0.35).cgColor
-        baseLayer.shadowOpacity = 1
-        baseLayer.shadowRadius = 12
-        baseLayer.shadowOffset = CGSize(width: 0, height: 6)
-        layer = baseLayer
-        setupGradient()
-    }
-
-    private func setupGradient() {
-        guard let layer = layer else { return }
-        gradientLayer.colors = [
-            NSColor.systemPink.withAlphaComponent(0.9).cgColor,
-            NSColor.systemBlue.cgColor
-        ]
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
-        gradientLayer.cornerRadius = layer.cornerRadius
-
-        highlightLayer.backgroundColor = NSColor.white.withAlphaComponent(0.2).cgColor
-        highlightLayer.opacity = 0
-        highlightLayer.cornerRadius = layer.cornerRadius
-
-        layer.backgroundColor = NSColor.clear.cgColor
-        if gradientLayer.superlayer == nil {
-            layer.insertSublayer(gradientLayer, at: 0)
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: DS.Space.m) {
+                BiteBadge(size: 34)
+                    .symbolEffect(.bounce, options: .nonRepeating, isActive: !reduceMotion)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Hands down")
+                        .font(.dsHeadline)
+                        .foregroundStyle(Color.dsText)
+                    Text(app.map { "Nail-biting detected in \($0)" } ?? "Nail-biting detected")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.dsTextSecondary)
+                }
+            }
+            .padding(.leading, DS.Space.m)
+            .padding(.trailing, DS.Space.xl)
+            .padding(.vertical, DS.Space.s + 2)
+            .contentShape(.capsule)
+            .floatingSurface(Capsule())
         }
-        if highlightLayer.superlayer == nil {
-            layer.insertSublayer(highlightLayer, above: gradientLayer)
+        .buttonStyle(.plain)
+        .padding(DS.Space.l) // room for the shadow
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isStaticText)
+    }
+}
+
+private struct InterruptView: View {
+    let onClose: () -> Void
+
+    private enum Phase { case prompt, reset, done }
+    private static let resetLength = 30
+    private static let breath = 4 // seconds in, seconds out
+
+    @State private var phase = Phase.prompt
+    @State private var remaining = resetLength
+    @State private var idleSeconds = 0
+    @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private var breathingIn: Bool { ((Self.resetLength - remaining) / Self.breath) % 2 == 0 }
+
+    var body: some View {
+        ZStack {
+            Color(light: 0x32292F, dark: 0x120E10).opacity(0.55)
+                .ignoresSafeArea()
+                .onTapGesture { if phase == .prompt { onClose() } }
+
+            VStack(spacing: DS.Space.xl - 4) {
+                switch phase {
+                case .prompt: prompt
+                case .reset: reset
+                case .done: done
+                }
+            }
+            .foregroundStyle(Color.dsText)
+            .frame(width: 400)
+            .padding(DS.Space.xxl)
+            .card(cornerRadius: DS.Radius.sheet)
+            .shadow(color: .black.opacity(0.25), radius: 30, y: 14)
+            .scaleEffect(appeared || reduceMotion ? 1 : 0.94)
+            .opacity(appeared ? 1 : 0)
+            .animation(DS.Motion.snappy, value: phase)
+        }
+        .onAppear { withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { appeared = true } }
+        .onReceive(tick) { _ in advance() }
+    }
+
+    private var prompt: some View {
+        Group {
+            BiteBadge(size: 64)
+            VStack(spacing: DS.Space.s) {
+                Text("You’re still biting")
+                    .font(.title.weight(.bold))
+                Text("Rest your hands for 30 seconds. Make a loose fist or lay them flat on the desk. Doing something else with your hands breaks the loop.")
+                    .font(.dsBody)
+                    .foregroundStyle(Color.dsTextSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: DS.Space.m) {
+                Button("Not Now", action: onClose)
+                    .keyboardShortcut(.cancelAction)
+                    .glassButton()
+                Button("Start 30-Second Reset") { idleSeconds = 0; phase = .reset }
+                    .keyboardShortcut(.defaultAction)
+                    .glassButton(prominent: true)
+            }
+            .controlSize(.large)
         }
     }
 
-    override func layout() {
-        super.layout()
-        gradientLayer.frame = bounds
-        highlightLayer.frame = bounds
+    /// Countdown ring that also paces breathing: it swells for 4 s, settles for 4 s.
+    private var reset: some View {
+        Group {
+            ZStack {
+                Circle()
+                    .fill(Color.dsBiteTint)
+                    .scaleEffect(reduceMotion ? 0.9 : (breathingIn ? 1.0 : 0.72))
+                    .animation(.easeInOut(duration: Double(Self.breath)), value: breathingIn)
+                Circle()
+                    .stroke(Color.dsSurfaceMuted, lineWidth: 10)
+                Circle()
+                    .trim(from: 0, to: CGFloat(remaining) / CGFloat(Self.resetLength))
+                    .stroke(Color.dsBite, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: remaining)
+                Text("\(remaining)")
+                    .font(.dsNumber(48, weight: .bold))
+                    .contentTransition(.numericText(countsDown: true))
+                    .animation(DS.Motion.counter, value: remaining)
+            }
+            .frame(width: 150, height: 150)
+            VStack(spacing: 6) {
+                Text(breathingIn ? "Breathe in" : "Breathe out")
+                    .font(.dsTitle)
+                    .contentTransition(.opacity)
+                    .animation(DS.Motion.smooth, value: breathingIn)
+                Text("Hands down, away from your face, until the timer ends.")
+                    .foregroundStyle(Color.dsTextSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            Button("End Early", action: onClose)
+                .keyboardShortcut(.cancelAction)
+                .glassButton()
+        }
     }
 
-    override func updateLayer() {
-        super.updateLayer()
-        highlightLayer.opacity = isHighlighted ? 0.35 : 0
+    private var done: some View {
+        Group {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(Color.dsWin)
+                .symbolEffect(.bounce, options: .nonRepeating, isActive: !reduceMotion)
+            Text("Nice work")
+                .font(.title.weight(.bold))
+            Text("Back to it.")
+                .foregroundStyle(Color.dsTextSecondary)
+        }
     }
 
-    override var intrinsicContentSize: NSSize {
-        let base = super.intrinsicContentSize
-        return NSSize(width: base.width + 40, height: max(44, base.height + 14))
+    private func advance() {
+        switch phase {
+        case .prompt:
+            // Don't trap someone who walked away: close an unanswered prompt after 20 s.
+            idleSeconds += 1
+            if idleSeconds >= 20 { onClose() }
+        case .reset:
+            remaining -= 1
+            if remaining <= 0 { phase = .done }
+        case .done:
+            idleSeconds += 1
+            if idleSeconds >= 2 { onClose() } // linger 2 s on "Nice work"
+        }
     }
 }

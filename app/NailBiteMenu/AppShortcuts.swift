@@ -40,7 +40,7 @@ func presentSettingsWindow() {
 @MainActor
 private func bringHomeWindowToFront() {
     focusApplication(after: 0.05) {
-        if let window = NSApp.windows.first(where: { $0.title == "NailBite Home" }) {
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "home" || $0.title == "NailBite" }) {
             window.makeKeyAndOrderFront(nil)
             focusApplication()
         }

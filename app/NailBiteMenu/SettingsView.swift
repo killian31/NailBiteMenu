@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var preferences: AppPreferences
     @ObservedObject var tracker: HabitTracker
+    @ObservedObject var monitor: MonitorViewModel
     @State private var showingResetAlert = false
 
     private var version: String {
@@ -12,6 +13,13 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                Picker("Theme", selection: $preferences.appearance) {
+                    ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
+
             Section("Monitoring") {
                 Picker("Detection model", selection: $preferences.modelVariant) {
                     ForEach(ModelVariant.allCases) { variant in
@@ -23,7 +31,7 @@ struct SettingsView: View {
                 Label(preferences.modelVariant.settingsDescription,
                       systemImage: preferences.modelVariant.settingsIcon)
                     .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.dsTextSecondary)
 
                 LabeledContent("Confidence threshold") {
                     HStack {
@@ -47,20 +55,29 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle(isOn: $preferences.interruptIfContinuing) {
+                    Text("Full-screen reset if biting continues")
+                    Text("A banner appears first. If you keep biting for a few seconds, a 30-second hands-down exercise takes over the screen.")
+                }
                 Toggle(isOn: $preferences.muteAlerts) {
                     Text("Mute alert sounds")
-                    Text("Disable chime and notification audio")
+                    Text("Banners and the reset screen still appear")
+                }
+                LabeledContent("Preview") {
+                    HStack {
+                        Button("Banner") { AlertPresenter.showBanner(app: nil) }
+                        Button("Reset Screen") { AlertPresenter.showInterrupt() }
+                    }
                 }
             } header: {
                 Text("Alerts")
-            } footer: {
-                Text("Visual notifications still appear when muted.")
             }
 
             Section {
                 LabeledContent("Version", value: version)
                 LabeledContent("Privacy", value: "On-device only")
                 LabeledContent("Model", value: "Core ML")
+                Toggle("Show performance stats in the menu", isOn: $monitor.showDebug)
             } header: {
                 Text("About")
             } footer: {
@@ -81,7 +98,9 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 520, height: 720)
+        .scrollContentBackground(.hidden)
+        .background(Color.dsBackground)
+        .foregroundStyle(Color.dsText)
         .alert("Reset all statistics?", isPresented: $showingResetAlert) {
             Button("Reset Data", role: .destructive) {
                 tracker.clearAllData()
@@ -112,5 +131,8 @@ private extension ModelVariant {
 }
 
 #Preview {
-    SettingsView(preferences: AppPreferences(), tracker: HabitTracker())
+    let prefs = AppPreferences()
+    let tracker = HabitTracker()
+    SettingsView(preferences: prefs, tracker: tracker,
+                 monitor: MonitorViewModel(preferences: prefs, tracker: tracker))
 }
