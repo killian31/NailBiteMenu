@@ -20,6 +20,19 @@ DMG="$DIST/NailBiteMenu.dmg"
 
 step() { printf '\n==> %s\n' "$*"; }
 
+# Submit to Apple and stop unless the result is Accepted (notarytool exits 0 even when Invalid).
+notarize() {
+  local out id
+  out=$(xcrun notarytool submit "$1" --keychain-profile "$PROFILE" --wait 2>&1) || true
+  echo "$out"
+  id=$(echo "$out" | awk '/^  id:/{print $2; exit}')
+  if ! echo "$out" | grep -q "status: Accepted"; then
+    echo "Notarization was not accepted. Apple's log:" >&2
+    [ -n "$id" ] && xcrun notarytool log "$id" --keychain-profile "$PROFILE" >&2
+    exit 1
+  fi
+}
+
 step "Checking signing identity and notary credentials"
 IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | grep "($TEAM_ID)" | head -1 | sed -E 's/.*"(.*)"/\1/' || true)
 if [ -z "$IDENTITY" ]; then
@@ -38,20 +51,29 @@ xcodebuild -project "$ROOT/app/NailBiteMenu.xcodeproj" -scheme NailBiteMenu -con
   -destination 'generic/platform=macOS' -derivedDataPath "$BUILD/dd" \
   ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
   CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$TEAM_ID" \
-  CODE_SIGN_IDENTITY="$IDENTITY" "CODE_SIGN_IDENTITY[sdk=macosx*]=$IDENTITY" \
+  CODE_SIGN_IDENTITY="$IDENTITY" \
   ENABLE_HARDENED_RUNTIME=YES OTHER_CODE_SIGN_FLAGS="--timestamp" \
+  CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
   clean build | grep -E "error:|BUILD (SUCCEEDED|FAILED)"
 
 step "Verifying the app signature"
 codesign --verify --deep --strict --verbose=2 "$APP"
 codesign -dvv "$APP" 2>&1 | grep -E "Authority=Developer ID Application|flags=.*runtime|Timestamp="
+ENTITLEMENTS=$(codesign -d --entitlements - "$APP" 2>&1)
+if echo "$ENTITLEMENTS" | grep -q "get-task-allow"; then
+  echo "The app has the get-task-allow entitlement; Apple will reject it." >&2; exit 1
+fi
+for e in com.apple.security.app-sandbox com.apple.security.device.camera; do
+  echo "$ENTITLEMENTS" | grep -q "$e" || { echo "Missing entitlement $e (camera or sandbox would break)." >&2; exit 1; }
+done
+echo "Entitlements: app-sandbox, device.camera"
 lipo -archs "$APP/Contents/MacOS/NailBiteMenu"
 VERSION=$(defaults read "$APP/Contents/Info.plist" CFBundleShortVersionString)
 echo "Version $VERSION"
 
 step "Notarizing the app"
 ditto -c -k --keepParent "$APP" "$BUILD/NailBiteMenu.zip"
-xcrun notarytool submit "$BUILD/NailBiteMenu.zip" --keychain-profile "$PROFILE" --wait
+notarize "$BUILD/NailBiteMenu.zip"
 xcrun stapler staple "$APP"
 
 step "Creating and signing the DMG"
@@ -62,7 +84,7 @@ hdiutil create -volname "NailBiteMenu" -srcfolder "$STAGE" -ov -format UDZO -fs 
 codesign --sign "$IDENTITY" --timestamp "$DMG"
 
 step "Notarizing the DMG"
-xcrun notarytool submit "$DMG" --keychain-profile "$PROFILE" --wait
+notarize "$DMG"
 xcrun stapler staple "$DMG"
 
 step "Gatekeeper checks"
