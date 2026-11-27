@@ -119,7 +119,7 @@ private struct LiveMeter: View {
             HStack {
                 Text("Live signal")
                 Spacer()
-                Text(isRunning ? "\(Int((value * 100).rounded()))" : "–")
+                Text(isRunning ? "\(Int((value * 100).rounded())) / \(Int((threshold * 100).rounded()))" : "–")
             }
             .font(.dsMeta)
             .foregroundStyle(Color.dsTextTertiary)

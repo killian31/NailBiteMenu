@@ -22,7 +22,7 @@ struct SettingsView: View {
                     HStack(spacing: DS.Space.m) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Try the alert")
-                            Text("Runs exactly what a real detection would, sound included")
+                            Text("Shows the alert the way a real detection does, with sound")
                                 .font(.dsCaption)
                                 .foregroundStyle(Color.dsTextSecondary)
                         }
@@ -36,7 +36,7 @@ struct SettingsView: View {
 
                     Toggle(isOn: $preferences.alertEdges) {
                         Text("Edge glow")
-                        Text("Vermilion light from every edge of every screen")
+                        Text("The edges of every screen light up red")
                     }
                     Toggle(isOn: $preferences.alertLabel) {
                         Text("“Hands down” label")
@@ -44,7 +44,7 @@ struct SettingsView: View {
                     }
                     Toggle(isOn: Binding(get: { !preferences.muteAlerts }, set: { preferences.muteAlerts = !$0 })) {
                         Text("Sound")
-                        Text("A short chime that starts on the same frame as the glow")
+                        Text("A short ping with the glow")
                     }
                     Toggle(isOn: $preferences.interruptIfContinuing) {
                         Text("Reset if biting continues")
