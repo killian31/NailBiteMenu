@@ -179,8 +179,9 @@ final class EdgeGlowView: NSView {
     }
 
     /// Level 2: move to a steady or breathing level from wherever the glow is now.
+    /// `keepCaption` lets the level-1 label finish its own fade while the glow is held.
     func transition(to level: Double, scrim scrimLevel: Double, duration: Double, start: CFTimeInterval? = nil,
-                    timing: CAMediaTimingFunctionName = .easeInEaseOut, reduceMotion: Bool) {
+                    timing: CAMediaTimingFunctionName = .easeInEaseOut, reduceMotion: Bool, keepCaption: Bool = false) {
         let v = values(level, reduceMotion: reduceMotion)
         let begin = start.map { layer!.convertTime($0, from: nil) }
         func animate(_ to: Float, on target: CALayer) {
@@ -197,7 +198,7 @@ final class EdgeGlowView: NSView {
         }
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        caption.removeAllAnimations(); caption.opacity = 0
+        if !keepCaption { caption.removeAllAnimations(); caption.opacity = 0 }
         animate(v.rim, on: rim)
         animate(v.near, on: near)
         animate(v.far, on: far)
@@ -329,8 +330,47 @@ enum AlertPresenter {
             panel.orderFrontRegardless()
             panel.glow.play(at: start, caption: panel.screenFrame == focus ? caption : nil, edges: edges, reduceMotion: reduceMotion)
         }
+        playStart = start
+        holding = false
         announce(app.map { "Hands down. Nail-biting detected in \($0)." } ?? "Hands down. Nail-biting detected.")
         hideAll(after: start - CACurrentMediaTime() + GlowTimeline.duration + 0.05)
+    }
+
+    private static var playStart: CFTimeInterval = 0
+    private static var holding = false
+    /// How long the edges stay lit after the last detection before they draw back.
+    private static let holdAfterLastHit: TimeInterval = 0.6
+
+    /// Biting goes on: keep the edges lit, silently, until about a second after the last detection.
+    /// Covers the time after the level-1 sweep and after the reset card is dismissed.
+    static func holdGlow(edges: Bool) {
+        guard card == nil, edges else { return }
+        let now = CACurrentMediaTime()
+        let sweepHolds = playStart + GlowTimeline.release - 0.05
+        if now < sweepHolds { // the level-1 sweep is still at full strength
+            scheduleRelease(after: sweepHolds - now + holdAfterLastHit)
+            return
+        }
+        if !holding {
+            holding = true
+            for p in glowPanels() {
+                p.orderFrontRegardless()
+                p.glow.transition(to: 0.88, scrim: 0, duration: GlowTimeline.attack, timing: .easeOut,
+                                  reduceMotion: reduceMotion, keepCaption: true)
+            }
+        }
+        scheduleRelease(after: holdAfterLastHit)
+    }
+
+    private static func scheduleRelease(after delay: TimeInterval) {
+        hideWork?.cancel()
+        let work = DispatchWorkItem {
+            holding = false
+            for p in panels { p.glow.transition(to: 0, scrim: 0, duration: 0.8, reduceMotion: reduceMotion, keepCaption: true) }
+            hideAll(after: 0.85)
+        }
+        hideWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
     private static func hideAll(after delay: TimeInterval) {
@@ -338,6 +378,7 @@ enum AlertPresenter {
         let work = DispatchWorkItem {
             panels.forEach { $0.glow.apply(level: 0); $0.orderOut(nil) }
             hideWork = nil
+            holding = false
         }
         hideWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + max(0, delay), execute: work)
@@ -352,6 +393,7 @@ enum AlertPresenter {
         guard card == nil, let screen = focusScreen else { return }
         hideWork?.cancel()
         hideWork = nil
+        holding = false
         edgesOn = edges
         previousApp = NSWorkspace.shared.frontmostApplication
 

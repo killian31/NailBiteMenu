@@ -139,6 +139,8 @@ final class MonitorViewModel: ObservableObject {
                   now.timeIntervalSince(episodeStart) >= escalateAfter {
             escalated = true
             Alerts.interrupt()
+        } else {
+            Alerts.hold() // still biting: the glow stays on until the hands come down
         }
         lastHit = now
 

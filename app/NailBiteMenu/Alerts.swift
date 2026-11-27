@@ -18,6 +18,11 @@ enum Alerts {
         AlertPresenter.showGlow(app: app, edges: showEdges, label: showLabel) { schedule(Chime.signal) }
     }
 
+    /// Every later detection in the episode: the edges stay lit while biting goes on. No sound.
+    static func hold() {
+        AlertPresenter.holdGlow(edges: showEdges)
+    }
+
     /// Biting kept going after the glow: the hands-down reset.
     static func interrupt() {
         AlertPresenter.showInterrupt(edges: showEdges) { schedule(Chime.reset) }
