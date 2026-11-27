@@ -42,7 +42,7 @@ You can explore, build, or contribute to it right here:
 
 2. **Open** the DMG and **drag** `NailBiteMenu.app` into your **Applications** folder.
 
-3. On first launch, macOS may say it’s from an unidentified developer. Go to **System Settings → Privacy & Security → Open Anyway**.
+3. Open it and allow camera access when macOS asks. The app is signed with a Developer ID and notarized by Apple.
 
 4. NailBiteMenu now runs quietly from your **menu bar**.
 
