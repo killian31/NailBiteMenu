@@ -49,6 +49,14 @@ The AccentColor asset (toggles, slider, system dialogs) moves to `#C8341C` / `#D
 
 **Settings** (`settings-*.png`). Still the native grouped Form, now led by the Alert section: **Preview Alert** and **Preview Reset** run the real path, sound included, so the alert can be tested and screenshotted without biting. Each part of the alert can be turned off on its own: Edge glow, the "Hands down" label, and Sound (the old "Mute alert sounds", now phrased as the thing you get). Deleting history names what goes: "All 291 episodes from 80 days will be deleted" (with your real numbers).
 
+## Icon
+
+![The icon at full size](icon-1024.png)
+
+A fingertip rises from the bottom of an ink tile, its nail in white, and the tile's edges glow vermilion: the alert, in the place it happens. The glow uses the same exponential falloff as the real alert. The finger is a dark grey that barely separates from the ink, so at 16 and 32 px the icon reads as a white nail inside a red frame. Everything is drawn in code (`make-icon.swift`), with no SF Symbols, which Apple doesn't allow in app icons. All 10 sizes in `AppIcon.appiconset` are replaced.
+
+`icon-in-dock-light.png` and `icon-in-dock-dark.png` show it in a Dock next to Finder, Safari, Mail, Xcode and Notes, and show the new menu bar glyph: the same fingertip drawn as an 18 pt template image (finger outline, solid nail), with a slash when paused. Because it's a template, macOS tints it for light and dark menu bars.
+
 ## The alert
 
 **Level 1, edge glow** (`alert-*.png`, `alert.mp4`, `alert-frames.png`). Vermilion light hits every edge of every screen at once, following the display's rounded corners, with a faint wash over the whole screen. Detection is getting faster (about 0.3 s on the `faster-trigger` branch), so the alert must not spend that gain on a fade: the edges are unmistakable on the first frames, and only the inward swell and the fade-out are slow.
@@ -86,4 +94,3 @@ A vermilion tag, "Hands down" plus the frontmost app, drops 8 pt into place unde
 - Liquid Glass is no longer used. Buttons are two custom styles (ink and quiet) with a 0.97 press scale, so they look the same on macOS 15 and 26.
 - The screenshots come from `DesignShots.swift`, a Debug-only renderer that draws every surface from mock data (95 days, improving) and composites the glow over a mock desktop. Run a Debug build with `-NBDesignShots YES -preferences.startMonitoringOnLaunch NO`. It never touches the real history. In the settings shots the switches look inactive because the offscreen window is not key.
 - Detection, the model and the camera pipeline are unchanged. `MonitorViewModel` only gained a Debug flag that shows the watching state without opening the camera.
-- The app icon is unchanged.

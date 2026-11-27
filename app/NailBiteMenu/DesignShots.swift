@@ -57,6 +57,9 @@ enum DesignShots {
             save(composite(desk, glow: 0.38, scrim: 0.42, card: resetCard), "reset-breathing-\(mode)")
         }
 
+        for dark in [false, true] { save(dockAndMenuBar(dark: dark), "icon-in-dock-\(dark ? "dark" : "light")") }
+        save(NSApp.applicationIconImage, "icon-1024", scale: 1024 / NSApp.applicationIconImage.size.width)
+
         // Frames of the level-1 glow at 30 fps, 0.2 s before it starts to 0.3 s after it ends, for the video and strip.
         let desk = desktop(window: todayWindow[false]!, dark: false)
         for (i, t) in stride(from: -0.2, through: GlowTimeline.duration + 0.3, by: 1.0 / 30).enumerated() {
@@ -139,6 +142,55 @@ enum DesignShots {
                                                        .foregroundColor: dark ? NSColor.white : NSColor.black]
             ("Xcode      File      Edit      View      Product      Window" as NSString)
                 .draw(at: NSPoint(x: 40, y: rect.height - 19), withAttributes: attrs)
+            return true
+        }
+    }
+
+    /// The icon in a Dock between familiar apps, and the template glyph in a menu bar, watching and paused.
+    private static func dockAndMenuBar(dark: Bool) -> NSImage {
+        let size = CGSize(width: 760, height: 300)
+        let ids = ["com.apple.finder", "com.apple.Safari", "com.apple.mail", "com.apple.dt.Xcode", "com.apple.Notes"]
+        let others = ids.compactMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+            .map { NSWorkspace.shared.icon(forFile: $0.path) }
+        return NSImage(size: size, flipped: false) { rect in
+            NSGradient(starting: NSColor(hex: dark ? 0x1D2230 : 0xB9C3CF), ending: NSColor(hex: dark ? 0x2B2A35 : 0xDCD9D3))!
+                .draw(in: rect, angle: -70)
+            let ink = dark ? NSColor.white : NSColor.black
+
+            // Menu bar with the glyph, watching then paused
+            (dark ? NSColor.black.withAlphaComponent(0.35) : NSColor.white.withAlphaComponent(0.55)).setFill()
+            NSRect(x: 0, y: rect.height - 24, width: rect.width, height: 24).fill()
+            let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 13, weight: .medium), .foregroundColor: ink]
+            ("Fri 27 Nov  23:40" as NSString).draw(at: NSPoint(x: rect.width - 130, y: rect.height - 19), withAttributes: attrs)
+            for (i, running) in [true, false].enumerated() {
+                let glyph = MenuGlyph.image(running: running)
+                let tinted = NSImage(size: glyph.size, flipped: false) { r in
+                    glyph.draw(in: r); ink.set(); r.fill(using: .sourceAtop); return true
+                }
+                tinted.draw(in: NSRect(x: rect.width - 186 + CGFloat(i) * 28, y: rect.height - 21, width: 16, height: 18))
+            }
+
+            // Dock
+            let mine: NSImage = NSApp.applicationIconImage
+            let icons: [NSImage] = Array(others.prefix(3)) + [mine] + Array(others.dropFirst(3))
+            let side: CGFloat = 72, gap: CGFloat = 6
+            let width = CGFloat(icons.count) * side + CGFloat(icons.count - 1) * gap + 20
+            let dock = NSRect(x: rect.midX - width / 2, y: 40, width: width, height: side + 20)
+            let shape = NSBezierPath(roundedRect: dock, xRadius: 22, yRadius: 22)
+            (dark ? NSColor.black.withAlphaComponent(0.3) : NSColor.white.withAlphaComponent(0.35)).setFill()
+            shape.fill()
+            (dark ? NSColor.white.withAlphaComponent(0.14) : NSColor.white.withAlphaComponent(0.5)).setStroke()
+            shape.stroke()
+            for (i, icon) in icons.enumerated() {
+                let x = dock.minX + 10 + CGFloat(i) * (side + gap)
+                icon.draw(in: NSRect(x: x, y: dock.minY + 10, width: side, height: side))
+                if icon === mine {
+                    ink.withAlphaComponent(0.7).setFill()
+                    NSBezierPath(ovalIn: NSRect(x: x + side / 2 - 2, y: dock.minY + 3, width: 4, height: 4)).fill()
+                }
+            }
+            // The large icon above
+            mine.draw(in: NSRect(x: rect.midX - 70, y: dock.maxY + 4, width: 140, height: 140))
             return true
         }
     }

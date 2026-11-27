@@ -86,8 +86,44 @@ private struct MenuBarStatus: View {
     let isRunning: Bool
 
     var body: some View {
-        // Template symbol: macOS tints it to match the menu bar, like every native item.
-        Image(systemName: isRunning ? "hand.raised.fill" : "hand.raised.slash")
-            .accessibilityLabel(isRunning ? "NailBite, monitoring" : "NailBite, paused")
+        // Template image: macOS tints it to match the menu bar, like every native item.
+        Image(nsImage: MenuGlyph.image(running: isRunning))
+            .accessibilityLabel(isRunning ? "NailBite, watching" : "NailBite, paused")
+    }
+}
+
+/// The app icon's fingertip, drawn as an 18 pt template glyph: a finger outline with a solid nail,
+/// slashed when paused.
+enum MenuGlyph {
+    private static let running = make(paused: false)
+    private static let paused = make(paused: true)
+
+    static func image(running isRunning: Bool) -> NSImage { isRunning ? running : paused }
+
+    private static func make(paused: Bool) -> NSImage {
+        let image = NSImage(size: NSSize(width: 16, height: 18), flipped: false) { _ in
+            NSColor.black.set()
+            let finger = NSBezierPath(roundedRect: NSRect(x: 3.25, y: -6, width: 9.5, height: 23.25), xRadius: 4.75, yRadius: 4.75)
+            finger.lineWidth = 1.5
+            finger.stroke()
+            let nail = NSBezierPath(roundedRect: NSRect(x: 5.5, y: 8, width: 5, height: 7), xRadius: 2.5, yRadius: 2.5)
+            nail.fill()
+            if paused {
+                let slash = NSBezierPath()
+                slash.move(to: NSPoint(x: 1, y: 16.5))
+                slash.line(to: NSPoint(x: 15, y: 1.5))
+                slash.lineCapStyle = .round
+                NSGraphicsContext.current?.compositingOperation = .clear // a gap on each side of the slash
+                slash.lineWidth = 4
+                slash.stroke()
+                NSGraphicsContext.current?.compositingOperation = .sourceOver
+                slash.lineWidth = 1.5
+                slash.stroke()
+            }
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = paused ? "NailBite, paused" : "NailBite, watching"
+        return image
     }
 }
