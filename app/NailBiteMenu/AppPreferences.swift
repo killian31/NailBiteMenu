@@ -8,6 +8,8 @@ final class AppPreferences: ObservableObject {
         static let startMonitoring = "preferences.startMonitoringOnLaunch"
         static let interrupt = "preferences.interruptIfContinuing"
         static let appearance = "preferences.appearance"
+        static let alertEdges = "preferences.alertEdges"
+        static let alertLabel = "preferences.alertLabel"
     }
 
     private let defaults = UserDefaults.standard
@@ -25,6 +27,14 @@ final class AppPreferences: ObservableObject {
             defaults.set(muteAlerts, forKey: StorageKey.muteAlerts)
             Alerts.isMuted = muteAlerts
         }
+    }
+
+    /// Level-1 alert parts. The sound is `muteAlerts`.
+    @Published var alertEdges: Bool {
+        didSet { defaults.set(alertEdges, forKey: StorageKey.alertEdges); Alerts.showEdges = alertEdges }
+    }
+    @Published var alertLabel: Bool {
+        didSet { defaults.set(alertLabel, forKey: StorageKey.alertLabel); Alerts.showLabel = alertLabel }
     }
 
     @Published var appearance: AppAppearance {
@@ -68,10 +78,14 @@ final class AppPreferences: ObservableObject {
         }
 
         interruptIfContinuing = defaults.object(forKey: StorageKey.interrupt) as? Bool ?? true
+        alertEdges = defaults.object(forKey: StorageKey.alertEdges) as? Bool ?? true
+        alertLabel = defaults.object(forKey: StorageKey.alertLabel) as? Bool ?? true
         appearance = defaults.string(forKey: StorageKey.appearance).flatMap(AppAppearance.init) ?? .system
         let initial = appearance
         DispatchQueue.main.async { initial.apply() } // NSApp isn't ready during init
 
         Alerts.isMuted = muteAlerts
+        Alerts.showEdges = alertEdges
+        Alerts.showLabel = alertLabel
     }
 }

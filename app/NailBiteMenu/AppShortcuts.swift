@@ -17,7 +17,7 @@ func presentHomeWindow(using openWindow: OpenWindowAction) {
 
 @MainActor
 func collapseAppToMenuBar() {
-    let protectedLevels: Set<NSWindow.Level> = [.statusBar, .popUpMenu]
+    let protectedLevels: Set<NSWindow.Level> = [.statusBar, .popUpMenu, .screenSaver, NSWindow.Level(rawValue: NSWindow.Level.screenSaver.rawValue + 1)]
     for window in NSApp.windows where window.isVisible && !protectedLevels.contains(window.level) {
         window.close()
     }

@@ -16,12 +16,21 @@ struct NailBiteMenuApp: App {
         
         _monitor = StateObject(wrappedValue: MonitorViewModel(preferences: prefs, tracker: tracker))
 
+        DispatchQueue.main.async {
+            // Synthesize the chimes and build the glow panels now, so the first alert starts on time.
+            _ = Chime.signal
+            AlertPresenter.prepare()
+            #if DEBUG
+            DesignShots.runIfRequested()
+            #endif
+        }
     }
 
     var body: some Scene {
         Window("NailBite", id: "home") {
             MainView(monitor: monitor, preferences: preferences, tracker: tracker)
         }
+        .windowStyle(.hiddenTitleBar)
         .commands {
             AppTerminationCommands()
         }
