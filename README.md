@@ -19,8 +19,6 @@
 - [Open Source](#open-source)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Controls](#controls)
-  - [Statistics](#statistics)
   - [Threshold](#threshold)
   - [Model Size](#model-size)
 - [Alerts](#alerts)
@@ -52,32 +50,15 @@ You can explore, build, or contribute to it right here:
 
 ## Usage
 
-Launching the app from Applications shows a Home window that offers quick actions:
+NailBite runs from your **menu bar**. The main window has three sections:
 
-- **Open Settings**: adjust defaults, mute alerts, pick model size.
-- **Collapse to Menu Bar**: close the window while keeping monitoring active.
+- **Today**: how long you've been bite-free, today's and this week's episodes, your bite-free streak, and the apps where biting happened.
+- **Insights**: episodes per day, a weekday × hour heatmap, average episode length, bite-free days, and top trigger apps over 7 days, 30 days, 90 days, or all time.
+- **Settings**: theme (System, Light, Dark), model size, threshold, alerts, and data reset.
 
-### Controls
+Close the window and monitoring keeps running. The menu bar panel shows the bite-free timer, today's count, and your streak, with buttons to pause or open the app.
 
-Click the status icon to open the compact control panel. You can:
-
-- **Start / Pause monitoring**
-- **Adjust detection threshold**
-- **Choose model size (speed vs. accuracy)**
-- **Toggle alerts and debug stats**
-
-Monitoring uses the built-in camera at a modest frame rate, keeping CPU usage low while still catching gestures.
-
-### Statistics
-
-The **Statistics** view (accessible via the main window) provides a detailed breakdown of your habit trends over time.
-
-- **Range Selection:** Quickly view data for the Last 7 Days, Last 30 Days, Last 90 Days, or All Time.
-- **Key Metrics:** See your total detections, daily average, and trends.
-- **Visualization:** Charts display detection frequency by **Day**, **Weekday**, and **Hour** to help you identify your most active times for biting.
-- **Data Management:** The settings section allows you to permanently reset all tracking data if you want a fresh start.
-
-Detection count is stored locally.
+Detections a few seconds apart are grouped into one **episode**. Streaks and bite-free days only count days the app was monitoring. Everything is stored locally.
 
 ### Threshold
 
@@ -105,17 +86,17 @@ Each bundled model trades speed for precision:
 
 ## Alerts
 
-When nail-biting is detected:
+Each biting episode triggers at most two alerts:
 
-- An overlay appears with the detection message, countdown, and “Stay mindful” button.
-- A macOS notification can sound if alerts aren’t muted.
+1. **A banner** slides in under the menu bar and names the app you're in. It doesn't steal focus.
+2. **A 30-second reset** takes over the screen if you keep biting. It guides you to rest your hands and breathe in and out for four seconds each. This is the competing-response step of habit reversal training. You can turn it off in Settings.
 
-Overlays auto-dismiss after three seconds, or immediately when you press Enter or click the button.
+Both have a **Preview** button in Settings.
 
 ## Privacy
 
 - All processing happens **on-device**. The camera feed never leaves your Mac.
-- No network calls, analytics, or cloud services.
+- The app runs in the App Sandbox **without network access**: no analytics, no cloud services.
 - You stay in control — pause monitoring any time.
 
 ## Requirements
