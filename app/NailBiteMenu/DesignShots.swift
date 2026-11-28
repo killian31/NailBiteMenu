@@ -198,7 +198,7 @@ enum DesignShots {
     private static func composite(_ desk: NSImage, glow level: Double, reach: Double? = nil, scrim: Double = 0, caption: String? = nil,
                                   card: NSImage? = nil, scale: CGFloat = 2) -> NSImage {
         let glow = EdgeGlowView(frame: NSRect(origin: .zero, size: screen))
-        glow.setCaption(caption.map { EdgeGlowView.captionImage(app: $0) } ?? nil)
+        glow.setCaption(caption.flatMap { EdgeGlowView.captionImage(app: $0, scale: scale) })
         glow.apply(level: level, reach: reach, scrim: scrim)
         let rep = bitmap(screen, scale: scale)
         NSGraphicsContext.saveGraphicsState()
