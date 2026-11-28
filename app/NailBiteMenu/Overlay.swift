@@ -143,8 +143,8 @@ final class EdgeGlowView: NSView {
     }
 
     /// Level 1: the whole 1.9 s glow, starting exactly at `start` (Core Animation time).
-    func play(at start: CFTimeInterval, caption image: NSImage?, edges: Bool, reduceMotion: Bool) {
-        setCaption(image)
+    func play(at start: CFTimeInterval, caption tag: Caption?, edges: Bool, reduceMotion: Bool) {
+        setCaption(tag)
         apply(level: 0, reduceMotion: reduceMotion)
         let fps = 60.0
         let n = Int(GlowTimeline.duration * fps) + 1
@@ -207,25 +207,26 @@ final class EdgeGlowView: NSView {
         CATransaction.commit()
     }
 
-    func setCaption(_ image: NSImage?) {
-        caption.contents = image
-        guard let image, let screen = window?.screen ?? NSScreen.main else { return }
-        caption.contentsScale = screen.backingScaleFactor
+    /// The tag's pixels and the screen density they were drawn for.
+    typealias Caption = (image: CGImage, scale: CGFloat)
+
+    func setCaption(_ new: Caption?) {
+        caption.contents = new?.image
+        guard let new, let screen = window?.screen ?? NSScreen.main else { return }
+        // The layer's scale must match the image's: a 2x tag shown at 1x would come out twice as large.
+        caption.contentsScale = new.scale
+        let size = CGSize(width: CGFloat(new.image.width) / new.scale, height: CGFloat(new.image.height) / new.scale)
         // Centered, just under the menu bar.
         let top = bounds.height - (screen.frame.maxY - screen.visibleFrame.maxY) - 14
-        caption.frame = CGRect(x: bounds.midX - image.size.width / 2, y: top - image.size.height,
-                               width: image.size.width, height: image.size.height)
+        caption.frame = CGRect(x: bounds.midX - size.width / 2, y: top - size.height, width: size.width, height: size.height)
     }
 
-    /// "Hands down · Safari" on a vermilion tag. Drawn once per alert from SwiftUI.
-    static func captionImage(app: String?) -> NSImage? {
-        let view = NSHostingView(rootView: GlowCaption(app: app))
-        view.frame.size = view.fittingSize
-        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
-        view.cacheDisplay(in: view.bounds, to: rep)
-        let image = NSImage(size: view.bounds.size)
-        image.addRepresentation(rep)
-        return image
+    /// "Hands down · Safari" on a vermilion tag. Drawn once per alert from SwiftUI, at the density of the
+    /// screen that shows it, so it stays sharp and the right size on a 1x external display too.
+    static func captionImage(app: String?, scale: CGFloat) -> Caption? {
+        let renderer = ImageRenderer(content: GlowCaption(app: app))
+        renderer.scale = scale
+        return renderer.cgImage.map { ($0, scale) }
     }
 }
 
@@ -322,13 +323,13 @@ enum AlertPresenter {
     static func showGlow(app: String?, edges: Bool, label: Bool, schedule: () -> CFTimeInterval) {
         guard card == nil else { return }
         if let pending = hideWork, !pending.isCancelled { return } // a glow is already on screen for this episode
-        let focus = focusScreen?.frame
-        let caption = label ? EdgeGlowView.captionImage(app: app) : nil
+        let focus = focusScreen
+        let caption = label ? EdgeGlowView.captionImage(app: app, scale: focus?.backingScaleFactor ?? 2) : nil
         let targets = glowPanels()
         let start = schedule()
         for panel in targets {
             panel.orderFrontRegardless()
-            panel.glow.play(at: start, caption: panel.screenFrame == focus ? caption : nil, edges: edges, reduceMotion: reduceMotion)
+            panel.glow.play(at: start, caption: panel.screenFrame == focus?.frame ? caption : nil, edges: edges, reduceMotion: reduceMotion)
         }
         playStart = start
         holding = false
